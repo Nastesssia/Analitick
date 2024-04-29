@@ -1,7 +1,10 @@
 <?php
 // Включаем логирование ошибок в файл
 ini_set("log_errors", 1);
-ini_set("error_log", "/path/to/php-error.log");
+ini_set("error_log", "C:\Users\alexa\OneDrive\Рабочий стол\Сайт готовый\Analitic/php-error.log");
+
+require_once 'DB_Functions.php';
+$db = new DB_Functions();
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Очистка и валидация входных данных
@@ -14,6 +17,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if (!$email) {
         echo "Ошибка: Неверный формат email.";
+        exit;
+    }
+
+    // Сохраняем данные в базу
+    if (!$db->saveSubmission($surname, $name, $patronymic, $phone, $email, $problem)) {
+        error_log("Не удалось сохранить данные в базу.");
+        echo "Ошибка: Не удалось сохранить данные.";
         exit;
     }
 
@@ -30,7 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email_content .= "Проблема: $problem\n";
 
     // Заголовки
-    $email_headers = "From: noreply@yourdomain.com";
+    $email_headers = "From: kabanova.anasteischa@yandex.ru";
 
     // Отправка письма на ваш email
     mail($recipient, $subject, $email_content, $email_headers);
