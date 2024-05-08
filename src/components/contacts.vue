@@ -9,7 +9,7 @@
           </div>
           <div class="contact-item">
             <img   draggable="false":src="emailIcon" alt="mail">
-            <a :href="emailAddress">info@analitik-group.ru</a>
+            <a :href="emailAddress">i@aleksandr-kabanov.ru</a>
           </div>
           <div class="contact-item">
             <img draggable="false":src="locationIcon" alt="location">
@@ -37,7 +37,7 @@
         emailIcon: "src/assets/section_contacts/email.svg",
         locationIcon: "src/assets/section_contacts/location.svg",
         phoneNumber: "+7 (905) 248-04-47",
-        emailAddress: "mailto:info@analitik-group.ru",
+        emailAddress: "mailto:i@aleksandr-kabanov.ru",
         locationAddress: "https://maps.yandex.ru",
         rightImage: "src/assets/section_contacts/contacts_img.png"
       };
@@ -59,6 +59,7 @@ body {
 }
 .container {
   display: flex;
+ 
 }
   
 .content {
@@ -74,17 +75,21 @@ body {
 .contacts {
   display: flex;
   flex-direction: column;
+  align-items: center; /* Центрируем элементы по горизонтали */
+  justify-content: center;
+
 }
   
 .contacts h2 {
-  font-size: 56px;
+  font-size: 250%;
   padding: 0;
   margin: 0;
 }
   
 .contact-item {
+  width: 80%;
   display: flex;
-  align-items: center;
+  justify-content: flex-start;
   transition: transform 0.3s; /* анимация при изменении трансформации */
 }
 
@@ -115,35 +120,37 @@ body {
 }
   
   .map {
-    width: 500px;
-    height: 400px;
+    width: 30vw;
+    height: 20vw;
+    margin-bottom: 30px;
+    margin-top: 15px;
+    border: 1.5px solid #3D210B;
   }
-  @media only screen and (max-width: 767px) {
+  @media (max-width: 820px) {
     .content {
     flex-direction: column; /* Меняем направление flex на вертикальное */
     align-items: center; /* Центрируем элементы по центру */
+    
   }
 
   .right-image {
-    order: -1; /* Помещаем изображение вверху */
+    display: none; /* Скрываем изображение на экранах до 768px */
   }
   .container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.3); 
   }
 
   .content {
     flex: 1;
-    margin-right: 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
   }
 
   .contacts h2 {
-    font-size: 28px; /* Уменьшаем размер заголовка */
+    font-size: 170%; /* Уменьшаем размер заголовка */
     margin-bottom: 20px;
+    margin-top: 25px;
   }
 
   .contact-item {
@@ -164,20 +171,61 @@ body {
   .contact-item img {
     margin-right: 5px; /* Уменьшаем отступ между изображением и текстом */
   }
-
-  .right-image {
-    width: 100%; /* Уменьшаем ширину изображения */
-    max-width: 300px; /* Устанавливаем максимальную ширину для поддержки соотношения сторон */
-    height: auto; /* Автоматический расчет высоты для поддержки соотношения сторон */
-    margin-top: 100px; /* Добавляем отступ сверху */
-  }
-
   .map {
+    margin-top: 5px;
     width: auto; /* Уменьшаем ширину карты */
     height: auto; /* Автоматический расчет высоты для поддержки соотношения сторон */
   }
 }
+@media (min-width: 821px) and (max-width: 1480px) {
+  .content {
+    flex-direction: column; /* Меняем направление flex на вертикальное */
+    align-items: center; 
+  }
 
+  .right-image {
+    display: none; 
+  }
+  .container {
+    box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.3); 
+  }
 
-  </style>
+  .content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .contacts h2 {
+    font-size: 300%; 
+    margin-bottom: 20px;
+    margin-top: 40px;
+  }
+
+  .contact-item {
+    display: flex;
+    align-items: center;
+    transition: transform 0.3s;
+  }
+
+  .contact-item:hover {
+    transform: scale3d(1.1, 1.1, 1.1); /* Увеличиваем размер при наведении */
+  }
+
+  .contact-item a {
+    margin-top: 10px;
+    font-size: 1.8vw; 
+  }
+
+  .contact-item img {
+    margin-right: 5px; /* Уменьшаем отступ между изображением и текстом */
+  }
+  .map {
+    margin-top: 0;
+  }
+
+}
+
+</style>
   

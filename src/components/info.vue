@@ -13,15 +13,21 @@ body {
   font-family: 'Source Serif 4', serif;
   margin: 0;
   padding: 0;
+  
 }
 
 .info {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 300px;
-  font-size: 28px;
+  min-height: 25vw;
+  font-size: 2vw;
   color: #3D210B;
+  padding-right: 10vw;
+  padding-left: 10vw;
+  text-wrap: wrap;
+  box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.3);  
 }
 
 .bold {
@@ -33,10 +39,12 @@ body {
   color: #970E0E;
 }
 
-@media only screen and (max-width: 767px) {
+@media (max-width: 1024px) {
   .info {
-    padding: 10px;
-    font-size: 20px;
+    font-size: 3vw;
+    padding-right: 5vw;
+    padding-left: 5vw;
+    height: 30vh;
   }
 }
 </style>
