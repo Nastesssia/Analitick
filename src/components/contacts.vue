@@ -19,7 +19,6 @@
         </div>
         <div class="maps">
           <div class="map" id="yandex-map">
-            <!-- Placeholder для карты -->
           </div>
         </div>
       </div>
@@ -71,15 +70,13 @@ body {
   flex-direction: column;
   align-items: center;
 }
-  
 .contacts {
   display: flex;
   flex-direction: column;
-  align-items: center; /* Центрируем элементы по горизонтали */
+  align-items: center; 
   justify-content: center;
 
 }
-  
 .contacts h2 {
   font-size: 250%;
   padding: 0;
@@ -90,14 +87,11 @@ body {
   width: 80%;
   display: flex;
   justify-content: flex-start;
-  transition: transform 0.3s; /* анимация при изменении трансформации */
+  transition: transform 0.3s; 
 }
-
 .contact-item:hover {
-  transform: scale3d(1.3, 1.3, 1.3); /* 3D увеличение размера при наведении */
+  transform: scale3d(1.3, 1.3, 1.3); 
 }
-
-  
 .contact-item a {
   margin: 20px;
   text-decoration: none;

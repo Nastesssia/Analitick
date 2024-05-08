@@ -3,25 +3,26 @@
     <input class="side-menu" type="checkbox" id="side-menu" />
     <label class="hamb" for="side-menu"><span class="hamb-line"></span></label>
     <!-- Menu -->
-    
+    <!-- Шапка -->
     <nav class="nav">
       <ul class="menu">
-        <li><a :href="link1">главная</a></li>
-        <li><a :href="link2">о компании</a> </li>
-        <li><a :href="link3">услуги</a></li>
-        <li><a :href="link4">контакты</a></li>
+        <li><a @click="scrollToSection('#upsection')">главная</a></li>
+        <li><a @click="scrollToSection('#info')">о компании</a></li>
+        <li><a @click="scrollToSection('#service')">услуги</a></li>
+        <li><a @click="scrollToSection('#contacts')">контакты</a></li>
       </ul>
     </nav>
-    <section class="upsection" draggable="false">
+    <section id="upsection" class="upsection" draggable="false">
+      <!-- Ваш код для верхней секции страницы -->
       <img class="imglogo_forDev" :src="logoSrc" :alt="logoAlt" draggable="false">
       <header class="header" id="#header">
         <div class="hrefheader">
           <img class="imglogo" :src="logoSrc" :alt="logoAlt" draggable="false">
           <div class="headerItems">
-            <a :href="link1" class="hrefheaderItem">главная</a>
-            <a :href="link2" class="hrefheaderItem">о компании</a>
-            <a :href="link3" class="hrefheaderItem">услуги</a>
-            <a :href="link4" class="hrefheaderItem">контакты</a>
+            <a @click="scrollToSection('#upsection')" class="hrefheaderItem">главная</a>
+            <a @click="scrollToSection('#info')" class="hrefheaderItem">о компании</a>
+            <a @click="scrollToSection('#service')" class="hrefheaderItem">услуги</a>
+            <a @click="scrollToSection('#contacts')" class="hrefheaderItem">контакты</a>
             <div class="number">{{ phoneNumber }}</div>
           </div>
         </div>
@@ -32,22 +33,60 @@
         </div>
       </header>
     </section>
+    <!-- Другие компоненты -->
     <info />
     <individ />
     <entity />
     <ask />
     <contacts />
     <footername />
-    <div class="none">
-    </div>
+    <div class="none"></div>
   </div>
 </template>
+<script>
+import info from './components/info.vue';
+import individ from './components/individ.vue';
+import entity from './components/entity.vue';
+import ask from './components/ask.vue';
+import contacts from './components/contacts.vue';
+import footername from './components/footername.vue';
+export default {
+  components: {
+    info,
+    individ,
+    entity,
+    ask,
+    contacts,
+    footername,
+  },
+  methods: {
+    scrollToSection(sectionId) {
+      const sectionElement = document.querySelector(sectionId);
+      if (sectionElement) {
+        sectionElement.scrollIntoView({ behavior: 'smooth' });
+      }
+    },
+    scrollToAsk() {
+      const askElement = document.getElementById('ask');
+      if (askElement) {
+        askElement.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  },
+  data() {
+    return {
+      logoSrc: 'src/assets/header/logo.png',
+      logoAlt: 'Company Logo',
+      phoneNumber: '+7 (4012) 37-72-97',
+    };
+  }
+};
+</script>
 
 
 <!-- Стили -->
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap');
-
 body {
   font-family: 'Source Serif 4', serif;
   margin: 0px;
@@ -56,6 +95,7 @@ body {
   -moz-box-sizing: border-box; /* Для Mozilla Firefox */
   box-sizing: border-box;
 }
+
 
 .menu,
 .nav,
@@ -68,13 +108,12 @@ body {
 }
 img {
   -webkit-user-select: none;
-  /* Safari */
   -moz-user-select: none;
-  /* Firefox */
   -ms-user-select: none;
-  /* IE10+/Edge */
   user-select: none;
-  /* стандартное свойство */
+}
+.menu a, .hrefheader a {
+  cursor: pointer;
 }
 
 .upsection {
@@ -93,6 +132,7 @@ img {
   justify-content: space-between;
   max-width: 100%;
 }
+
 .headerItems{
   display: flex;
   justify-content: center;
@@ -447,51 +487,4 @@ img {
 </style>
 
 
-<!-- Скрипты -->
-<script>
-// Импортируем ваши компоненты
-import info from './components/info.vue';
-import individ from './components/individ.vue';
-import entity from './components/entity.vue';
-import ask from './components/ask.vue';
-import contacts from './components/contacts.vue';
-import footername from './components/footername.vue';
 
-
-export default {
-  components: {
-    info,
-    individ,
-    entity,
-    ask,
-    contacts,
-    footername,
-
-  },
-  methods: {
-    scrollToAsk() {
-      const askElement = document.getElementById('ask');
-      if (askElement) {
-        askElement.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
-  },
-  data() {
-    return {
-      logoSrc: 'src/assets/header/logo.png',
-      logoAlt: 'Company Logo',
-      link1: '#App',
-      link2: '#info',
-      link3: '#service',
-      link4: '#contacts',
-      phoneNumber: '+7 (4012) 37-72-97',
-      profileImgAlt: 'Profile Picture',
-      loginText: 'Войти',
-    };
-  },
-
-
-};
-
-
-</script>

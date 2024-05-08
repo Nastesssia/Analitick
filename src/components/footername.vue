@@ -28,8 +28,11 @@
     </div>
 
     <div class="politic">
-      <p>copyright © 2011-2024. все права защищены </p><a href="">политика конфиденциальности</a>
+      <p>copyright © 2011-2024. все права защищены </p>
+      <a class="konf" href="">политика конфиденциальности</a>
+      <a class="freepik" href="https://ru.freepik.com/">Изображения взяты с Freepik</a>
     </div>
+
   </footer>
 </template>
 
@@ -171,29 +174,21 @@ footer {
 .politic p {
   font-size: 0.8vw;
   color: rgba(255, 255, 255, 0.5);
-  /* Прозрачный цвет текста */
   text-transform: uppercase;
-  /* Преобразование текста в прописные буквы */
   padding: 0;
   margin: 0;
 }
 
-.politic a {
-
+.konf{
   color: rgba(255, 255, 255, 0.5);
-  /* Прозрачный цвет ссылок */
   text-decoration: none;
   text-transform: uppercase;
-  /* Преобразование текста в прописные буквы */
   font-size: 0.8vw;
 
 }
 
 .politic a:hover {
-
   color: rgb(206, 206, 206);
-  /* Прозрачный цвет ссылок */
-
 }
 
 .politic {
@@ -205,7 +200,12 @@ footer {
   height: 90px;
   padding: 0;
 }
-
+.freepik{
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  text-transform: uppercase;
+  font-size: 0.5vw;
+}
 .push {
   margin-left: 810px;
   margin-bottom: 50px

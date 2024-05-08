@@ -11,20 +11,20 @@
       <h2>{{ formTitle }}</h2>
       <p class="form-container-description">{{ formDescription }}</p>
       <div class="form">
-        <!-- Добавляем атрибуты required и maxlength для фамилии -->
         <input type="text" :placeholder="surnamePlaceholder" v-model="surname" class="input-field" required maxlength="20" ><br>
-        <!-- Добавляем атрибуты required и maxlength для имени -->
         <input type="text" :placeholder="namePlaceholder" v-model="name" class="input-field" required maxlength="20"><br>
         <input type="text" :placeholder="patronymicPlaceholder" v-model="patronymic"  required maxlength="20"  class="input-field"><br>
-        <input type="text" :placeholder="phonePlaceholder" v-model="phone"  required maxlength="12" class="input-field"><br>
+        <input type="text" v-mask="'+7 (###) ###-####'" v-model="phone" :placeholder="phonePlaceholder" required maxlength="17" class="input-field">
+
         <input type="text" :placeholder="emailPlaceholder" v-model="email"  required maxlength="70" class="input-field"><br>
-        <!-- Добавляем атрибут maxlength для описания проблемы -->
         <input type="text" :placeholder="problemPlaceholder" v-model="problem" style="height: 100px;" class="input-field" maxlength="200"><br>
         <input type="file" id="fileInput" ref="fileInput" style="display:none;" @change="handleFileUpload">
         <div class="containerAddFile">
           <div class="file-list">
-            <div v-for="(file, index) in fileList" :key="index" class="file-list-item">
-              <div>{{ file.name }} ({{ (file.size / 1024 / 1024).toFixed(2) }} MB)</div>
+            <div v-for="(fileItem, index) in fileList" :key="index" class="file-list-item">
+              <div>{{ fileItem.file.name }} ({{ (fileItem.file.size / 1024 / 1024).toFixed(2) }} MB)</div>
+              <span v-if="fileItem.isLoading" class="loading-circle"></span>
+              <span v-else class="check-mark">✔</span>
               <button @click="removeFile(index)">✖</button>
             </div>
           </div>
@@ -50,8 +50,13 @@
 
 <script>
 import axios from 'axios';
+import validator from 'validator';
+import { mask } from 'vue-the-mask';
 
 export default {
+  directives: {
+    mask
+  },
   data() {
     return {
       fileList: [],
@@ -77,31 +82,43 @@ export default {
   },
   methods: {
     handleFileUpload(event) {
-      this.isLoading = true; // Показываем индикатор загрузки
-      const files = event.target.files;
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        if (file.size > 1024 * 1024 * 25) {
-          alert('Файл слишком большой (не более 25 МБ)');
-          this.isLoading = false; // Скрываем индикатор
-          return;
-        }
-        if (this.fileList.length >= 5) {
-          alert('Максимальное количество файлов 5');
-          this.isLoading = false; // Скрываем индикатор
-          return;
-        }
-        this.fileList.push(file);
+  const files = event.target.files;
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    if (file.size > 1024 * 1024 * 25) { 
+      alert('Файл слишком большой (не более 25 МБ)');
+      continue;
+    }
+    if (this.fileList.length >= 5) {
+      alert('Максимальное количество файлов 5');
+      continue;
+    }
+
+    const fileWithStatus = {
+      file: file,
+      isLoading: true 
+    };
+    this.fileList.push(fileWithStatus);
+
+    setTimeout(() => {
+      const index = this.fileList.indexOf(fileWithStatus);
+      if (index !== -1) {
+        this.fileList[index].isLoading = false;
       }
-      this.isLoading = false; // Скрываем индикатор после добавления файлов
-    },
+    }, 1500); 
+  }
+},
+
     sendFormData() {
   if (!this.surname || !this.name ||  !this.email || !this.problem) {
     alert('Пожалуйста, заполните все обязательные поля: Фамилия, Имя, Email, Проблема.');
     return;
   }
-
-  this.isLoading = true; // Показываем индикатор загрузки
+  if (!validator.isEmail(this.email)) {
+    alert('Введите корректный электронный адрес.');
+    return;
+  }
+  this.isLoading = true; 
   const formData = new FormData();
   formData.append('surname', this.surname);
   formData.append('name', this.name);
@@ -110,7 +127,8 @@ export default {
   formData.append('email', this.email);
   formData.append('problem', this.problem);
   this.fileList.forEach(file => {
-    formData.append('files[]', file);
+    formData.append('files[]', file.file);
+
   });
 
   axios.post('https://analitikgroup.ru/send-email.php', formData, {
@@ -120,13 +138,13 @@ export default {
   })
     .then(response => {
       alert('Заявка успешно отправлена!');
-      this.resetForm();  // вызов метода сброса формы после успешной отправки
-      this.isLoading = false; // Скрываем индикатор загрузки
+      this.resetForm(); 
+      this.isLoading = false; 
     })
     .catch(error => {
       console.error('Ошибка при отправке заявки:', error);
       alert('Ошибка при отправке заявки.');
-      this.isLoading = false; // Скрываем индикатор загрузки
+      this.isLoading = false;
     });
 
     },
@@ -162,25 +180,17 @@ body {
 
 .file-list-item {
   display: flex;
-  /* Используем flexbox для управления элементами */
   justify-content: space-between;
-  /* Распределение пространства между элементами */
   align-items: center;
-  /* Выравнивание элементов по вертикальной оси */
   margin-bottom: 5px;
   white-space: nowrap;
-  /* Запрет переноса строк */
   overflow: hidden;
-  /* Скрытие текста, выходящего за пределы элемента */
 }
 
 .file-list-item div {
   flex-grow: 1;
-  /* Позволяет блоку с названием файла занимать все доступное пространство */
   text-overflow: ellipsis;
-  /* Добавление многоточия в конце обрезанного текста */
   overflow: hidden;
-  /* Скрыть текст, выходящий за пределы элемента */
 }
 
 .file-list-item:last-child {
@@ -210,6 +220,34 @@ body {
   position: relative;
   width: 10px;
 }
+.loading-circle {
+  width: 20px; 
+  height: 20px; 
+  min-width: 20px; 
+  min-height: 20px; 
+  max-width: 30px; 
+  max-height: 30px; 
+  border-radius: 50%; 
+  border: 0.2vw solid #ccc; 
+  border-top-color: #333; 
+  animation: spin 1s linear infinite; 
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+
+.check-mark {
+  color: green;
+  font-size: 20px;
+}
+
 
 .dots::after {
   content: '';
@@ -223,17 +261,12 @@ body {
   height: 140px;
   padding: 10px;
   width: 13vw;
-  /* Ширина инпутов */
   background-color: #F6F5F3;
   border-radius: 5px;
-  /* Загругление углов */
   margin-bottom: 10px;
-  /* Отступ снизу */
   color: #9E9085;
-  /* Цвет текста */
   border: 1px solid #3D210B;
-  /* Тонкая граница */
-
+  overflow-y: auto;
 }
 
 .file-list-item {
@@ -247,7 +280,6 @@ body {
 .container {
   display: flex;
   justify-content: center;
-  /* Центрирование содержимого */
   align-items: center;
   margin-bottom: 0;
   padding: 0;
@@ -257,7 +289,6 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  /* Выравнивание содержимого по вертикали */
   align-items: center;
   text-align: center;
   margin-right: 20px;
@@ -318,19 +349,13 @@ body {
 
 .input-field {
   width: 100%;
-  /* Ширина инпутов */
   background-color: #F6F5F3;
   font-size: 0.8vw;
   padding: 10px;
-  /* Отступы */
   border-radius: 5px;
-  /* Загругление углов */
   margin-bottom: 10px;
-  /* Отступ снизу */
   color: #9E9085;
-  /* Цвет текста */
   border: 1px solid #3D210B;
-  /* Тонкая граница */
 
 }
 
@@ -360,7 +385,6 @@ body {
 @media (max-width: 820px) {
   .container {
     flex-direction: column;
-    /* меняем направление flex на вертикальное */
     align-items: center;
   }
 
@@ -417,7 +441,6 @@ body {
 @media (min-width: 821px) and (max-width: 1480px) {
   .container {
     flex-direction: column;
-    /* меняем направление flex на вертикальное */
     align-items: center;
   }
 

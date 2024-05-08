@@ -18,8 +18,11 @@
     "mssql": "^10.0.2",
     "nodemailer": "^6.9.13",
     "router": "^1.3.8",
+    "v-mask": "^2.3.0",
+    "validator": "^13.11.0",
     "vue": "^3.4.24",
-    "vue-router": "^4.3.2"
+    "vue-router": "^4.3.2",
+    "vue-the-mask": "^0.11.1"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.4",
