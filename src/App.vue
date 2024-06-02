@@ -23,7 +23,12 @@
             <a @click="scrollToSection('#info')" class="hrefheaderItem">о компании</a>
             <a @click="scrollToSection('#service')" class="hrefheaderItem">услуги</a>
             <a @click="scrollToSection('#contacts')" class="hrefheaderItem">контакты</a>
-            <div class="number">{{ phoneNumber }}</div>
+            <div class="number">
+              <a :href="'tel:' + phoneNumber" style="color: white; text-decoration: none;">
+                {{ phoneNumber }}
+              </a>
+            </div>
+
           </div>
         </div>
         <div class="maininfo">
@@ -87,12 +92,15 @@ export default {
 <!-- Стили -->
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap');
+
 body {
   font-family: 'Source Serif 4', serif;
   margin: 0px;
   padding: 0px;
-  -webkit-box-sizing: border-box; /* Для WebKit (Chrome, Safari) */
-  -moz-box-sizing: border-box; /* Для Mozilla Firefox */
+  -webkit-box-sizing: border-box;
+  /* Для WebKit (Chrome, Safari) */
+  -moz-box-sizing: border-box;
+  /* Для Mozilla Firefox */
   box-sizing: border-box;
 }
 
@@ -102,17 +110,22 @@ body {
 .side-menu,
 .hamb {
   display: none;
+
 }
-.imglogo_forDev{
+
+.imglogo_forDev {
   display: none;
 }
+
 img {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
 }
-.menu a, .hrefheader a {
+
+.menu a,
+.hrefheader a {
   cursor: pointer;
 }
 
@@ -133,7 +146,7 @@ img {
   max-width: 100%;
 }
 
-.headerItems{
+.headerItems {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -183,10 +196,11 @@ img {
 }
 
 .maininfo {
-  position:relative;
+  position: relative;
   left: 0;
   top: 10vh;
-  max-width: 100%; /* Максимальная ширина блока */
+  max-width: 100%;
+  /* Максимальная ширина блока */
 }
 
 .maininfo h1 {
@@ -314,11 +328,12 @@ img {
   ul {
     list-style: none;
   }
-  .imglogo_forDev{
-  display: block;
-  width: 50%;
-  padding-top: 2vh;
-  padding-left: 5%;
+
+  .imglogo_forDev {
+    display: block;
+    width: 50%;
+    padding-top: 2vh;
+    padding-left: 5%;
   }
 
   .nav {
@@ -420,12 +435,14 @@ img {
   .side-menu {
     display: none;
   }
+
   /* Toggle menu icon */
   .side-menu:checked~nav {
     max-height: 100%;
   }
-  .side-menu:not(:checked) ~ .nav {
-  border: none;
+
+  .side-menu:not(:checked)~.nav {
+    border: none;
   }
 
   .side-menu:checked~.hamb .hamb-line {
@@ -448,14 +465,15 @@ img {
 
   .upsection {
     background-image: url(assets/header/bg_min.png);
-    background-position: right; 
+    background-position: right;
   }
+
   .maininfo {
     position: absolute;
     top: 30vh;
     left: 5vw;
-    max-width: 100%; 
-}
+    max-width: 100%;
+  }
 
   .maininfo h1 {
     font-size: 4.5vw;
@@ -476,6 +494,7 @@ img {
     display: none;
   }
 }
+
 @media (min-width: 768px) and (max-width: 1280px) {
   .maininfo button {
     height: 10vh;
@@ -485,6 +504,3 @@ img {
   }
 }
 </style>
-
-
-

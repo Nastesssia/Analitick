@@ -21,6 +21,7 @@
     "v-mask": "^2.3.0",
     "validator": "^13.11.0",
     "vue": "^3.4.24",
+    "vue-autocomplete": "^0.0.2",
     "vue-router": "^4.3.2",
     "vue-the-mask": "^0.11.1"
   },

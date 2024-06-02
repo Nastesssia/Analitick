@@ -17,28 +17,35 @@
         </div>
 
         <div class="numbers">
-          <a :href="phoneNumber">+7 (4012) 37-72-97</a>
+          <a :href="'tel:' + phoneNumber">+7 (4012) 37-72-97</a>
         </div>
       </div>
       <div class="push">
         <h2>Оставьте свой телефон и мы <br> перезвоним вам</h2>
-        <input type="text" placeholder="Телефон" v-model="phone" required maxlength="20">
+        <input type="text" placeholder="Телефон" v-mask="'+7 (###) ###-####'" v-model="phone" required maxlength="20">
         <button type="button" @click="submit">Отправить</button>
+        <!-- Сообщение об отправке -->
+        <div v-if="isSending" class="sending-message">Сообщение отправляется...</div>
       </div>
     </div>
 
     <div class="politic">
       <p>copyright © 2011-2024. все права защищены </p>
-      <a class="konf" href="">политика конфиденциальности</a>
+      <a class="konf" href="politic.html">политика конфиденциальности</a>
       <a class="freepik" href="https://ru.freepik.com/">Изображения взяты с Freepik</a>
     </div>
-
   </footer>
 </template>
 
+
 <script>
+import { mask } from 'vue-the-mask';
 import axios from 'axios';
+
 export default {
+  directives: {
+    mask
+  },
   data() {
     return {
       phone: '',
@@ -49,41 +56,55 @@ export default {
       tgIcon: "src/assets/footer/tg_icon_white.svg",
       emailIcon: "src/assets/footer/email_icon_white.svg",
       waIcon: "src/assets/footer/wa_icon_white.svg",
-      phoneNumber: "+7 (4012) 37-72-97",
-      homeLink: "#",
+      homeLink: "#upsection",
       aboutLink: "#info",
       servicesLink: "#service",
       contactsLink: "#contacts",
-      phoneSent: false // флаг для отслеживания отправки номера телефона
+      phoneNumber: "+7 (4012) 37-72-97",
+      isSending: false
     };
   },
+  mounted() {
+    this.addSmoothScrolling();
+  },
   methods: {
+    smoothScrollTo(target) {
+      const targetElement = document.querySelector(target);
+      if (targetElement) {
+        window.scrollTo({
+          top: targetElement.offsetTop,
+          behavior: 'smooth'
+        });
+      }
+    },
+    addSmoothScrolling() {
+      const links = document.querySelectorAll('.href a');
+      links.forEach(link => {
+        link.addEventListener('click', event => {
+          event.preventDefault(); // Отменяем стандартное поведение ссылки
+          const target = event.target.getAttribute('href'); // Получаем цель ссылки
+          this.smoothScrollTo(target); // Вызываем метод для плавной прокрутки
+        });
+      });
+    },
     submit() {
-      // Проверяем, не пуст ли номер телефона
       if (!this.phone.trim()) {
         alert('Пожалуйста, введите номер телефона');
         return;
       }
 
-      // Проверяем, был ли уже отправлен номер телефона
-      if (this.phoneSent) {
-        alert('Номер телефона уже отправлен');
-        return;
-      }
-
-      // Создаем объект FormData для передачи данных формы
+      this.isSending = true;
       const formData = new FormData();
       formData.append('phone', this.phone);
 
       axios.post('https://analitikgroup.ru/send-phone.php', formData)
         .then(response => {
+          this.isSending = false;
           console.log('Response:', response.data);
           alert('Телефон успешно отправлен');
-
-          // Устанавливаем флаг, чтобы указать, что номер телефона уже был отправлен
-          this.phoneSent = true;
         })
         .catch(error => {
+          this.isSending = false;
           console.error('Error:', error);
           alert('Ошибка при отправке телефона');
         });
@@ -93,6 +114,17 @@ export default {
 </script>
 
 <style scoped>
+/* Добавьте стиль для отображения процесса отправки */
+.sending-message {
+  display: block;
+  color: white;
+  background-color: #3F3F3F;
+  padding: 10px;
+  text-align: center;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
 .link {
   display: flex;
   flex-direction: row;
@@ -160,7 +192,6 @@ footer {
   /* увеличение масштаба при наведении */
 }
 
-
 footer img {
   margin-top: 50px;
   width: 500px;
@@ -179,12 +210,11 @@ footer {
   margin: 0;
 }
 
-.konf{
+.konf {
   color: rgba(255, 255, 255, 0.5);
   text-decoration: none;
   text-transform: uppercase;
   font-size: 0.8vw;
-
 }
 
 .politic a:hover {
@@ -200,15 +230,17 @@ footer {
   height: 90px;
   padding: 0;
 }
-.freepik{
+
+.freepik {
   color: rgba(255, 255, 255, 0.5);
   text-decoration: none;
   text-transform: uppercase;
   font-size: 0.5vw;
 }
+
 .push {
   margin-left: 810px;
-  margin-bottom: 50px
+  margin-bottom: 50px;
 }
 
 input {
@@ -284,24 +316,26 @@ input {
   }
 
   .icons img {
-    margin-top: 30px; /* Уменьшаем отступ сверху */
+    margin-top: 30px;
+    /* Уменьшаем отступ сверху */
     cursor: pointer;
     height: auto;
-    width: 70%; /* Увеличиваем ширину иконок */
+    width: 70%;
+    /* Увеличиваем ширину иконок */
     margin-right: 0;
     transition: transform 0.3s;
   }
 
   .icons {
     display: flex;
-    justify-content: center; 
+    justify-content: center;
     margin-left: 10px;
     margin-right: 10px;
   }
 
   .numbers {
-   margin-top: 0;
-   margin-left: 0;
+    margin-top: 0;
+    margin-left: 0;
   }
 
   .push {
@@ -330,7 +364,6 @@ input {
 
   .politic {
     height: 70px;
-
   }
 
   .numbers a {
@@ -381,26 +414,29 @@ input {
   }
 
   .icons img {
-    margin-top: 30px; /* Уменьшаем отступ сверху */
+    margin-top: 30px;
+    /* Уменьшаем отступ сверху */
     cursor: pointer;
     height: auto;
-    width: 130%; /* Увеличиваем ширину иконок */
+    width: 130%;
+    /* Увеличиваем ширину иконок */
     margin-right: 0;
     transition: transform 0.3s;
   }
-  .icons a{
+
+  .icons a {
     margin-right: 20px;
     margin-left: 20px;
   }
 
   .icons {
     display: flex;
-    justify-content: center; 
+    justify-content: center;
   }
 
   .numbers {
-   margin-top: 0;
-   margin-left: 40px;
+    margin-top: 0;
+    margin-left: 40px;
   }
 
   .push {

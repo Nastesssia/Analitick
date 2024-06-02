@@ -1,7 +1,7 @@
 <template>
   <div class="loading-indicator" v-if="isLoading">
-  Пожалуйста дождитесь загрузки файлов<span class="dots">.</span>
-</div>
+    Пожалуйста, дождитесь загрузки файлов<span class="dots">...</span>
+  </div>
 
   <div id="ask" class="container">
     <div class="img-container">
@@ -11,13 +11,12 @@
       <h2>{{ formTitle }}</h2>
       <p class="form-container-description">{{ formDescription }}</p>
       <div class="form">
-        <input type="text" :placeholder="surnamePlaceholder" v-model="surname" class="input-field" required maxlength="20" ><br>
-        <input type="text" :placeholder="namePlaceholder" v-model="name" class="input-field" required maxlength="20"><br>
-        <input type="text" :placeholder="patronymicPlaceholder" v-model="patronymic"  required maxlength="20"  class="input-field"><br>
-        <input type="text" v-mask="'+7 (###) ###-####'" v-model="phone" :placeholder="phonePlaceholder" required maxlength="17" class="input-field">
-
-        <input type="text" :placeholder="emailPlaceholder" v-model="email"  required maxlength="70" class="input-field"><br>
-        <input type="text" :placeholder="problemPlaceholder" v-model="problem" style="height: 100px;" class="input-field" maxlength="200"><br>
+        <input type="text" :placeholder="surnamePlaceholder" v-model="surname" class="input-field" required maxlength="20" autocomplete="family-name"><br>
+        <input type="text" :placeholder="namePlaceholder" v-model="name" class="input-field" required maxlength="20" autocomplete="given-name"><br>
+        <input type="text" :placeholder="patronymicPlaceholder" v-model="patronymic" required maxlength="20" class="input-field" autocomplete="additional-name"><br>
+        <input type="text" v-mask="'+7 (###) ###-####'" v-model="phone" :placeholder="phonePlaceholder" required maxlength="17" class="input-field" autocomplete="tel">
+        <input type="text" :placeholder="emailPlaceholder" v-model="email" required maxlength="70" class="input-field" autocomplete="email"><br>
+        <textarea type="text" :placeholder="problemPlaceholder" v-model="problem" style="height: 100px;" class="input-field" maxlength="5000"></textarea><br>
         <input type="file" id="fileInput" ref="fileInput" style="display:none;" @change="handleFileUpload">
         <div class="containerAddFile">
           <div class="file-list">
@@ -33,17 +32,24 @@
             <p class="fileAttach">Прикрепить файл<br>(Не более 5 и до 25МБ)</p>
           </label>
           <input type="file" id="fileInput" ref="fileInput" style="display:none;" @change="handleFileUpload">
-         
         </div>
       </div>
       <div class="politic">
         <p class="politic_text">
           Нажимая кнопку отправить, вы выражаете согласие на передачу и
           обработку <br> персональных данных в соответствии с
-          <a href="#" style="text-decoration: underline; color: #3D210B;">политикой конфиденциальности</a>.
+          <a href="politic.html" style="text-decoration: underline; color: #3D210B;">политикой конфиденциальности</a>.
         </p>
-        <button @click="sendFormData">{{ buttonText }}</button>
+        <button @click="sendFormData" :disabled="isLoading">{{ buttonText }}</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Кастомное оповещение -->
+  <div v-if="alert.show" :class="['custom-alert', `alert-${alert.type}`]">
+    <div class="custom-alert-content">
+      <span class="close-btn" @click="closeAlert">&times;</span>
+      <p>{{ alert.message }}</p>
     </div>
   </div>
 </template>
@@ -77,48 +83,46 @@ export default {
       patronymic: '',
       phone: '',
       email: '',
-      problem: ''
+      problem: '',
+      alert: { show: false, message: '', type: 'error' }
     };
   },
   methods: {
     handleFileUpload(event) {
-  const files = event.target.files;
-  for (let i = 0; i < files.length; i++) {
-    const file = files[i];
-    if (file.size > 1024 * 1024 * 25) { 
-      alert('Файл слишком большой (не более 25 МБ)');
-      continue;
-    }
-    if (this.fileList.length >= 5) {
-      alert('Максимальное количество файлов 5');
-      continue;
-    }
-
-    const fileWithStatus = {
-      file: file,
-      isLoading: true 
-    };
-    this.fileList.push(fileWithStatus);
-
-    setTimeout(() => {
-      const index = this.fileList.indexOf(fileWithStatus);
-      if (index !== -1) {
-        this.fileList[index].isLoading = false;
+      const files = event.target.files;
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.size > 1024 * 1024 * 25) { 
+          this.showAlert('Файл слишком большой (не более 25 МБ)');
+          continue;
+        }
+        if (this.fileList.length >= 5) {
+          this.showAlert('Максимальное количество файлов 5');
+          continue;
+        }
+        const fileWithStatus = {
+          file: file,
+          isLoading: true 
+        };
+        this.fileList.push(fileWithStatus);
+        setTimeout(() => {
+          const index = this.fileList.indexOf(fileWithStatus);
+          if (index !== -1) {
+            this.fileList[index].isLoading = false;
+          }
+        }, 1500);
       }
-    }, 1500); 
-  }
-},
-
-    sendFormData() {
-  if (!this.surname || !this.name ||  !this.email || !this.problem) {
-    alert('Пожалуйста, заполните все обязательные поля: Фамилия, Имя, Email, Проблема.');
+    },
+   sendFormData() {
+  if (!this.surname || !this.name || !this.email || !this.problem) {
+    this.showAlert('Заполните все обязательные поля: Фамилия, Имя, Email, Проблема.');
     return;
   }
   if (!validator.isEmail(this.email)) {
-    alert('Введите корректный электронный адрес.');
+    this.showAlert('Введите корректный электронный адрес.');
     return;
   }
-  this.isLoading = true; 
+  this.isLoading = true;
   const formData = new FormData();
   formData.append('surname', this.surname);
   formData.append('name', this.name);
@@ -128,25 +132,42 @@ export default {
   formData.append('problem', this.problem);
   this.fileList.forEach(file => {
     formData.append('files[]', file.file);
-
   });
-
   axios.post('https://analitikgroup.ru/send-email.php', formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }
   })
-    .then(response => {
-      alert('Заявка успешно отправлена!');
-      this.resetForm(); 
-      this.isLoading = false; 
-    })
-    .catch(error => {
-      console.error('Ошибка при отправке заявки:', error);
-      alert('Ошибка при отправке заявки.');
-      this.isLoading = false;
-    });
+  .then(response => {
+    console.log('Response:', response); // Логируем полный ответ сервера
+    if (response.data.status === 'success') {
+      this.showAlert(response.data.message, 'success');
+      this.resetForm();
+    } else {
+      this.showAlert(response.data.message || 'Неизвестная ошибка');
+    }
+    this.isLoading = false;
+  })
+  .catch(error => {
+    this.showAlert('Ошибка при отправке заявки.');
+    console.error('Ошибка при отправке заявки:', error); // Логируем ошибку
+    this.isLoading = false;
+  });
+}
 
+,
+showAlert(message, type = 'error') {
+  if (!message) {
+    message = 'Неизвестная ошибка';
+  }
+  this.alert.message = message;
+  this.alert.type = type;
+  this.alert.show = true;
+  setTimeout(() => this.alert.show = false, 5000);  // Автоматическое закрытие через 5 секунд
+}
+,
+    closeAlert() {
+      this.alert.show = false;
     },
     resetForm() {
       this.surname = '';
@@ -161,15 +182,48 @@ export default {
       this.fileList.splice(index, 1);
     }
   }
-
 };
 </script>
+
 
 <style>
 body {
   color: #3D210B;
   margin: 0;
   padding: 0;
+}
+.custom-alert {
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  max-width: 600px;
+  padding: 20px;
+  color: white;
+  text-align: center;
+  border-radius: 8px;
+  z-index: 1000;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.custom-alert.alert-success {
+  background-color: #4CAF50;  /* зеленый цвет фона для успеха */
+}
+.custom-alert.alert-error {
+  background-color: #f44336;  /* красный цвет фона для ошибок */
+}
+.custom-alert-content {
+  position: relative;
+}
+
+.close-btn {
+  position: absolute;
+  top: 50%;  /* Центрирование относительно вертикали контента */
+  right: 5px;
+  transform: translateY(-50%); /* Смещение по Y для точного центрирования */
+  font-size: 32px; /* Увеличенный размер для большей видимости */
+  cursor: pointer;
+
 }
 
 .containerAddFile {
@@ -348,6 +402,7 @@ body {
 }
 
 .input-field {
+  font-family: 'Source Serif 4', serif;
   width: 100%;
   background-color: #F6F5F3;
   font-size: 0.8vw;
@@ -356,7 +411,12 @@ body {
   margin-bottom: 10px;
   color: #9E9085;
   border: 1px solid #3D210B;
-
+  resize: vertical; /* Разрешает изменение размера только вертикально */
+    overflow-y: scroll; /* Добавляет вертикальную прокрутку */
+    word-wrap: break-word; /* Переносит слова на следующую строку */
+    white-space: pre-wrap; /* Сохраняет пробелы и переносит текст на новую строку */
+    box-sizing: border-box; /* Учитывает padding и border в общих размерах элемента */
+    max-height: 300px; /* Ограничивает максимальную высоту */
 }
 
 .politic {
