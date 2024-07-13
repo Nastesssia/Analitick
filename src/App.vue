@@ -337,7 +337,7 @@ img {
   }
 
   .nav {
-    width: 40%;
+    width: 45%;
     position: fixed;
     background-color: var(--yellow);
     overflow: hidden;
@@ -351,9 +351,10 @@ img {
   }
 
   .menu a {
-    font-size: 13px;
+    font-size: 3vw;
     display: block;
     padding-left: 5px;
+    
     padding: 10px;
     color: var(--brown);
   }
@@ -364,7 +365,7 @@ img {
     /* Добавляем абсолютное позиционирование */
     top: 0;
     /* Выравниваем кнопку по верху nav */
-    right: 20px;
+    right: 15px;
     /* Выравниваем кнопку по правому краю nav */
     padding: 45px 20px;
     background-color: #970E0E;
@@ -495,7 +496,7 @@ img {
   }
 }
 
-@media (min-width: 768px) and (max-width: 1280px) {
+@media (min-width: 821px) and (max-width: 1280px) {
   .maininfo button {
     height: 10vh;
     width: 30vw;
