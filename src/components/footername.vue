@@ -22,7 +22,7 @@
       </div>
       <div class="push">
         <h2>Оставьте свой телефон и мы <br> перезвоним вам</h2>
-        <input type="text" placeholder="Телефон" v-mask="'+7 (###) ###-####'" v-model="phone" required maxlength="20">
+        <input type="text" @input="formatPhone" placeholder="Телефон" v-mask="'+7 (###) ###-####'" v-model="phone" required maxlength="20">
         <button type="button" @click="submit">Отправить</button>
         <!-- Сообщение об отправке -->
         <div v-if="isSending" class="sending-message">Сообщение отправляется...</div>
@@ -49,6 +49,7 @@ export default {
   data() {
     return {
       phone: '',
+      phoneFormatted: false ,
       footerLogo: "src/assets/footer/footer_logo.png",
       telegramLink: "https://web.telegram.org/k/#@KabanovAleksandr",
       emailLink: "mailto:i@aleksandr-kabanov.ru",
@@ -75,6 +76,13 @@ export default {
           top: targetElement.offsetTop,
           behavior: 'smooth'
         });
+      }
+    },
+    formatPhone() {
+      const firstPart = "+7 (8";
+      if (this.phone.startsWith(firstPart) && !this.phoneFormatted) {
+        this.phone = "+7 (" + this.phone.slice(firstPart.length);
+        this.phoneFormatted = true; // помечаем, что форматирование выполнено
       }
     },
     addSmoothScrolling() {

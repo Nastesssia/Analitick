@@ -2,7 +2,6 @@
   <div class="loading-indicator" v-if="isLoading">
     Пожалуйста, дождитесь загрузки файлов<span class="dots">...</span>
   </div>
-
   <div id="ask" class="container">
     <div class="img-container">
       <img class="left-image" :src="imageSrc" alt="image" draggable="false">
@@ -14,7 +13,7 @@
         <input type="text" :placeholder="surnamePlaceholder" v-model="surname" class="input-field" required maxlength="20" autocomplete="family-name"><br>
         <input type="text" :placeholder="namePlaceholder" v-model="name" class="input-field" required maxlength="20" autocomplete="given-name"><br>
         <input type="text" :placeholder="patronymicPlaceholder" v-model="patronymic" required maxlength="20" class="input-field" autocomplete="additional-name"><br>
-        <input type="text" v-mask="'+7 (###) ###-####'" v-model="phone" :placeholder="phonePlaceholder" required maxlength="17" class="input-field" autocomplete="tel">
+        <input type="text" @input="formatPhone" v-mask="'+7 (###) ###-####'" v-model="phone" :placeholder="phonePlaceholder" required maxlength="17" class="input-field" autocomplete="tel">
         <input type="text" :placeholder="emailPlaceholder" v-model="email" required maxlength="70" class="input-field" autocomplete="email"><br>
         <textarea type="text" :placeholder="problemPlaceholder" v-model="problem" style="height: 100px;" class="input-field" maxlength="5000"></textarea><br>
         <input type="file" id="fileInput" ref="fileInput" style="display:none;" @change="handleFileUpload">
@@ -28,7 +27,7 @@
             </div>
           </div>
           <label for="fileInput" class="file-upload-label">
-            <img :src="imageSrcPlus" alt="Выбрать файлы" width="40" height="40">
+            <img src="@/assets/section_ask/plus.png" alt="Выбрать файлы" width="40" height="40">
             <p class="fileAttach">Прикрепить файл<br>(Не более 5 и до 25МБ)</p>
           </label>
           <input type="file" id="fileInput" ref="fileInput" style="display:none;" @change="handleFileUpload">
@@ -44,8 +43,7 @@
       </div>
     </div>
   </div>
-
-  <!-- Кастомное оповещение -->
+  <!-- Оповещение -->
   <div v-if="alert.show" :class="['custom-alert', `alert-${alert.type}`]">
     <div class="custom-alert-content">
       <span class="close-btn" @click="closeAlert">&times;</span>
@@ -67,6 +65,7 @@ export default {
     return {
       fileList: [],
       isLoading: false,
+      phoneFormatted: false,
       imageSrc: "src/assets/section_ask/ask_me_img.png",
       formTitle: "Задайте нам вопрос",
       formDescription: "Мы ответим вам в кратчайшие сроки",
@@ -77,7 +76,7 @@ export default {
       emailPlaceholder: "E-mail",
       problemPlaceholder: "Опишите вашу проблему",
       buttonText: "Отправить",
-      imageSrcPlus: "src/assets/section_ask/plus.png",
+      imageSrcPlus: '@/assets/section_ask/plus.png',
       surname: '',
       name: '',
       patronymic: '',
@@ -154,7 +153,15 @@ export default {
     this.isLoading = false;
   });
 }
+,
 
+formatPhone() {
+      const firstPart = "+7 (8";
+      if (this.phone.startsWith(firstPart) && !this.phoneFormatted) {
+        this.phone = "+7 (" + this.phone.slice(firstPart.length);
+        this.phoneFormatted = true; // Помечаем, что форматирование выполнено
+      }
+    }
 ,
 showAlert(message, type = 'error') {
   if (!message) {
