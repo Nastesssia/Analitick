@@ -159,7 +159,7 @@ formatPhone() {
       const firstPart = "+7 (8";
       if (this.phone.startsWith(firstPart) && !this.phoneFormatted) {
         this.phone = "+7 (" + this.phone.slice(firstPart.length);
-        this.phoneFormatted = true; // Помечаем, что форматирование выполнено
+        this.phoneFormatted = true; // Помечаем, что форматирование выssполнено
       }
     }
 ,
