@@ -4,7 +4,8 @@
   </div>
   <div id="ask" class="container">
     <div class="img-container">
-      <img class="left-image" :src="imageSrc" alt="image" draggable="false">
+      <img class="left-image" src="/src/assets/section_ask/ask_me_img.jpg" alt="image" draggable="false">
+
     </div>
     <div class="form-container">
       <h2>{{ formTitle }}</h2>
@@ -66,7 +67,7 @@ export default {
       fileList: [],
       isLoading: false,
       phoneFormatted: false,
-      imageSrc: "src/assets/section_ask/ask_me_img.jpg",
+      
       formTitle: "Задайте нам вопрос",
       formDescription: "Мы ответим вам в кратчайшие сроки",
       surnamePlaceholder: "Фамилия",
@@ -159,7 +160,7 @@ formatPhone() {
       const firstPart = "+7 (8";
       if (this.phone.startsWith(firstPart) && !this.phoneFormatted) {
         this.phone = "+7 (" + this.phone.slice(firstPart.length);
-        this.phoneFormatted = true; // Помечаем, что форматирование выssполнено
+        this.phoneFormatted = true; // Помечаем, что форматирование выполнено
       }
     }
 ,
