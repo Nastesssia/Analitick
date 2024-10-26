@@ -22,7 +22,8 @@
       </div>
       <div class="push">
         <h2>Оставьте свой телефон и мы <br> перезвоним вам</h2>
-        <input type="text" @input="formatPhone" placeholder="Телефон" v-mask="'+7 (###) ###-####'" v-model="phone" required maxlength="20">
+        <input type="text" @input="formatPhone" placeholder="Телефон" v-mask="'+7 (###) ###-####'" v-model="phone"
+          required maxlength="20">
         <button type="button" @click="submit">Отправить</button>
         <!-- Сообщение об отправке -->
         <div v-if="isSending" class="sending-message">Сообщение отправляется...</div>
@@ -30,9 +31,21 @@
     </div>
 
     <div class="politic">
-      <p>copyright © 2011-2024. все права защищены </p>
-      <a class="konf" href="politic.html">политика конфиденциальности</a>
-      <a class="freepik" href="https://ru.freepik.com/">Изображения взяты с Freepik</a>
+      <!-- Добавляем блок с информацией слева -->
+      <a href="https://para-web.com/" target="_blank">
+        <div class="extra-info">
+          <p>Разработка сайтов</p>
+          <img src="@/assets/footer/paraweb_logo.svg" alt="Paraweb Logo" class="paraweb-logo" />
+        </div>
+      </a>
+
+
+      <!-- Существующий контент с копирайтом и ссылками -->
+      <div class="copyright">
+        <p>copyright © 2011-2024. все права защищены</p>
+        <a class="konf" href="politic.html">политика конфиденциальности</a>
+        <a class="freepik" href="https://ru.freepik.com/">Изображения взяты с Freepik</a>
+      </div>
     </div>
   </footer>
 </template>
@@ -49,7 +62,7 @@ export default {
   data() {
     return {
       phone: '',
-      phoneFormatted: false ,
+      phoneFormatted: false,
       footerLogo: "src/assets/footer/footer_logo.png",
       telegramLink: "https://web.telegram.org/k/#@KabanovAleksandr",
       emailLink: "mailto:i@aleksandr-kabanov.ru",
@@ -211,7 +224,7 @@ footer {
 }
 
 .politic p {
-  font-size: 0.8vw;
+  font-size: 1vw;
   color: rgba(255, 255, 255, 0.5);
   text-transform: uppercase;
   padding: 0;
@@ -222,7 +235,7 @@ footer {
   color: rgba(255, 255, 255, 0.5);
   text-decoration: none;
   text-transform: uppercase;
-  font-size: 0.8vw;
+  font-size: 1vw;
 }
 
 .politic a:hover {
@@ -243,7 +256,7 @@ footer {
   color: rgba(255, 255, 255, 0.5);
   text-decoration: none;
   text-transform: uppercase;
-  font-size: 0.5vw;
+  font-size: 1vw;
 }
 
 .push {
@@ -272,6 +285,14 @@ input {
   /* анимация при изменении цвета фона и текста */
 }
 
+.copyright {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+}
+
 .push button:hover {
   background-color: white;
   /* изменение фона при наведении */
@@ -287,7 +308,47 @@ input {
   padding-left: 10px;
 }
 
+.extra-info {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  left: 20px;
+  align-self: center;
+  justify-content: center;
+}
+
+.extra-info p {
+  color: white;
+  font-size: 1vw;
+  text-align: center;
+  margin: 0;
+
+}
+
+.paraweb-logo {
+  margin-top: 5px;
+  width: 10vw;
+}
+
+
 @media (max-width: 858px) {
+  .paraweb-logo {
+    margin: 0;
+  }
+
+  .extra-info {
+    width: 15px;
+  }
+
+  .paraweb-logo {
+    margin-top: 5px;
+    width: 13vw;
+  }
+
+  .extra-info p {
+    font-size: 2vw;
+  }
+
   footer img {
     width: 50%;
     height: auto;
@@ -311,6 +372,10 @@ input {
   .href {
     margin-top: 5px;
     margin-left: 0;
+  }
+
+  .copyright p {
+    font-size: 2vw;
   }
 
   .href a {
@@ -366,9 +431,7 @@ input {
     font-size: 2vw;
   }
 
-  .politic p {
-    font-size: 2vw;
-  }
+
 
   .politic {
     height: 70px;

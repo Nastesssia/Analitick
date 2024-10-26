@@ -66,7 +66,7 @@ export default {
       fileList: [],
       isLoading: false,
       phoneFormatted: false,
-      imageSrc: "src/assets/section_ask/ask_me_img.png",
+      imageSrc: "src/assets/section_ask/ask_me_img.jpg",
       formTitle: "Задайте нам вопрос",
       formDescription: "Мы ответим вам в кратчайшие сроки",
       surnamePlaceholder: "Фамилия",

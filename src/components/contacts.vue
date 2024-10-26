@@ -38,7 +38,7 @@
         phoneNumber: "+7 (905) 248-04-47",
         emailAddress: "mailto:i@aleksandr-kabanov.ru",
         locationAddress: "https://maps.yandex.ru",
-        rightImage: "src/assets/section_contacts/contacts_img.png"
+        rightImage: "src/assets/section_contacts/contacts_img.jpg"
       };
     },
     mounted() {

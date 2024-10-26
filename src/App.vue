@@ -132,7 +132,7 @@ img {
 .upsection {
   min-height: 100vh;
   width: 100%;
-  background-image: url(assets/header/main_bg.png);
+  background-image: url(assets/header/main_bg.jpg);
   background-size: cover;
   box-shadow: 0px 5px 20px rgba(0, 0, 0, 0.6);
   background-position: right;
