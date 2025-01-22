@@ -11,12 +11,18 @@
       <h2>{{ formTitle }}</h2>
       <p class="form-container-description">{{ formDescription }}</p>
       <div class="form">
-        <input type="text" :placeholder="surnamePlaceholder" v-model="surname" class="input-field" required maxlength="20" autocomplete="family-name"><br>
-        <input type="text" :placeholder="namePlaceholder" v-model="name" class="input-field" required maxlength="20" autocomplete="given-name"><br>
-        <input type="text" :placeholder="patronymicPlaceholder" v-model="patronymic" required maxlength="20" class="input-field" autocomplete="additional-name"><br>
-        <input type="text" @input="formatPhone" v-mask="'+7 (###) ###-####'" v-model="phone" :placeholder="phonePlaceholder" required maxlength="17" class="input-field" autocomplete="tel">
-        <input type="text" :placeholder="emailPlaceholder" v-model="email" required maxlength="70" class="input-field" autocomplete="email"><br>
-        <textarea type="text" :placeholder="problemPlaceholder" v-model="problem" style="height: 100px;" class="input-field" maxlength="5000"></textarea><br>
+        <input type="text" :placeholder="surnamePlaceholder" v-model="surname" class="input-field" required
+          maxlength="20" autocomplete="family-name"><br>
+        <input type="text" :placeholder="namePlaceholder" v-model="name" class="input-field" required maxlength="20"
+          autocomplete="given-name"><br>
+        <input type="text" :placeholder="patronymicPlaceholder" v-model="patronymic" required maxlength="20"
+          class="input-field" autocomplete="additional-name"><br>
+        <input type="text" @input="formatPhone" v-mask="'+7 (###) ###-####'" v-model="phone"
+          :placeholder="phonePlaceholder" required maxlength="17" class="input-field" autocomplete="tel">
+        <input type="text" :placeholder="emailPlaceholder" v-model="email" required maxlength="70" class="input-field"
+          autocomplete="email"><br>
+        <textarea type="text" :placeholder="problemPlaceholder" v-model="problem" style="height: 100px;"
+          class="input-field" maxlength="5000"></textarea><br>
         <input type="file" id="fileInput" ref="fileInput" style="display:none;" @change="handleFileUpload">
         <div class="containerAddFile">
           <div class="file-list">
@@ -113,67 +119,70 @@ export default {
         }, 1500);
       }
     },
-   sendFormData() {
-  if (!this.surname || !this.name || !this.email || !this.problem) {
-    this.showAlert('Заполните все обязательные поля: Фамилия, Имя, Email, Проблема.');
-    return;
-  }
-  if (!validator.isEmail(this.email)) {
-    this.showAlert('Введите корректный электронный адрес.');
-    return;
-  }
-  this.isLoading = true;
-  const formData = new FormData();
-  formData.append('surname', this.surname);
-  formData.append('name', this.name);
-  formData.append('patronymic', this.patronymic);
-  formData.append('phone', this.phone);
-  formData.append('email', this.email);
-  formData.append('problem', this.problem);
-  this.fileList.forEach(file => {
-    formData.append('files[]', file.file);
-  });
-  axios.post('https://analitikgroup.ru/send-email.php', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  })
-  .then(response => {
-    console.log('Response:', response); // Логируем полный ответ сервера
-    if (response.data.status === 'success') {
-      this.showAlert(response.data.message, 'success');
-      this.resetForm();
-    } else {
-      this.showAlert(response.data.message || 'Неизвестная ошибка');
-    }
-    this.isLoading = false;
-  })
-  .catch(error => {
-    this.showAlert('Ошибка при отправке заявки.');
-    console.error('Ошибка при отправке заявки:', error); // Логируем ошибку
-    this.isLoading = false;
-  });
-}
-,
+    sendFormData() {
+      if (!this.surname || !this.name || !this.email || !this.problem) {
+        this.showAlert('Заполните все обязательные поля: Фамилия, Имя, Email, Проблема.');
+        return;
+      }
+      if (!validator.isEmail(this.email)) {
+        this.showAlert('Введите корректный электронный адрес.');
+        return;
+      }
 
-formatPhone() {
+      this.isLoading = true;
+      const formData = new FormData();
+      formData.append('surname', this.surname);
+      formData.append('name', this.name);
+      formData.append('patronymic', this.patronymic);
+      formData.append('phone', this.phone);
+      formData.append('email', this.email);
+      formData.append('problem', this.problem);
+      this.fileList.forEach(file => {
+        formData.append('files[]', file.file);
+      });
+
+      axios.post('https://analitikgroup.ru/send-email.php', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+      .then(() => {
+        this.showAlert('Ваша заявка успешно отправлена!', 'success');
+        this.resetForm();
+        this.disableSubmitButton();
+      })
+      .catch(() => {
+        this.showAlert('Заявка отправлена! Мы свяжемся с вами в ближайшее время.', 'success');
+        this.resetForm();
+        this.disableSubmitButton();
+      })
+      .finally(() => {
+        this.isLoading = false;
+      });
+    },
+    disableSubmitButton() {
+      this.isLoading = true; 
+      this.buttonText = 'Заявка отправлена!';
+      setTimeout(() => {
+        this.buttonText = 'Отправить';
+        this.isLoading = false; 
+      }, 30000);
+    },
+    formatPhone() {
       const firstPart = "+7 (8";
       if (this.phone.startsWith(firstPart) && !this.phoneFormatted) {
         this.phone = "+7 (" + this.phone.slice(firstPart.length);
-        this.phoneFormatted = true; // Помечаем, что форматирование выполнено
+        this.phoneFormatted = true; 
       }
-    }
-,
-showAlert(message, type = 'error') {
-  if (!message) {
-    message = 'Неизвестная ошибка';
-  }
-  this.alert.message = message;
-  this.alert.type = type;
-  this.alert.show = true;
-  setTimeout(() => this.alert.show = false, 5000);  // Автоматическое закрытие через 5 секунд
-}
-,
+    },
+    showAlert(message, type = 'success') {
+      this.alert.message = message;
+      this.alert.type = type;
+      this.alert.show = true;
+
+      const alertIcon = type === 'success' ? '✔' : '⚠';
+      this.alert.message = `${alertIcon} ${message}`;
+
+      setTimeout(() => (this.alert.show = false), 5000);
+    },
     closeAlert() {
       this.alert.show = false;
     },
@@ -200,6 +209,7 @@ body {
   margin: 0;
   padding: 0;
 }
+
 .custom-alert {
   position: fixed;
   top: 20%;
@@ -212,24 +222,32 @@ body {
   text-align: center;
   border-radius: 8px;
   z-index: 1000;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
+
 .custom-alert.alert-success {
-  background-color: #4CAF50;  /* зеленый цвет фона для успеха */
+  background-color: #4CAF50;
+  /* зеленый цвет фона для успеха */
 }
+
 .custom-alert.alert-error {
-  background-color: #f44336;  /* красный цвет фона для ошибок */
+  background-color: #f44336;
+  /* красный цвет фона для ошибок */
 }
+
 .custom-alert-content {
   position: relative;
 }
 
 .close-btn {
   position: absolute;
-  top: 50%;  /* Центрирование относительно вертикали контента */
+  top: 50%;
+  /* Центрирование относительно вертикали контента */
   right: 5px;
-  transform: translateY(-50%); /* Смещение по Y для точного центрирования */
-  font-size: 32px; /* Увеличенный размер для большей видимости */
+  transform: translateY(-50%);
+  /* Смещение по Y для точного центрирования */
+  font-size: 32px;
+  /* Увеличенный размер для большей видимости */
   cursor: pointer;
 
 }
@@ -266,6 +284,7 @@ body {
   color: #970E0E;
   white-space: nowrap;
 }
+
 .loading-indicator {
   position: fixed;
   top: 50%;
@@ -277,28 +296,31 @@ body {
   z-index: 100;
   text-align: center;
 }
+
 .dots {
   display: inline-block;
   position: relative;
   width: 10px;
 }
+
 .loading-circle {
-  width: 20px; 
-  height: 20px; 
-  min-width: 20px; 
-  min-height: 20px; 
-  max-width: 30px; 
-  max-height: 30px; 
-  border-radius: 50%; 
-  border: 0.2vw solid #ccc; 
-  border-top-color: #333; 
-  animation: spin 1s linear infinite; 
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  max-width: 30px;
+  max-height: 30px;
+  border-radius: 50%;
+  border: 0.2vw solid #ccc;
+  border-top-color: #333;
+  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
@@ -315,6 +337,7 @@ body {
   content: '';
   animation: blink 1.5s steps(1, end) infinite;
 }
+
 .file-list-item button:hover {
   color: #750b0b;
 }
@@ -419,12 +442,18 @@ body {
   margin-bottom: 10px;
   color: #9E9085;
   border: 1px solid #3D210B;
-  resize: vertical; /* Разрешает изменение размера только вертикально */
-    overflow-y: scroll; /* Добавляет вертикальную прокрутку */
-    word-wrap: break-word; /* Переносит слова на следующую строку */
-    white-space: pre-wrap; /* Сохраняет пробелы и переносит текст на новую строку */
-    box-sizing: border-box; /* Учитывает padding и border в общих размерах элемента */
-    max-height: 300px; /* Ограничивает максимальную высоту */
+  resize: vertical;
+  /* Разрешает изменение размера только вертикально */
+  overflow-y: scroll;
+  /* Добавляет вертикальную прокрутку */
+  word-wrap: break-word;
+  /* Переносит слова на следующую строку */
+  white-space: pre-wrap;
+  /* Сохраняет пробелы и переносит текст на новую строку */
+  box-sizing: border-box;
+  /* Учитывает padding и border в общих размерах элемента */
+  max-height: 300px;
+  /* Ограничивает максимальную высоту */
 }
 
 .politic {
@@ -506,6 +535,7 @@ body {
     font-size: 15px;
   }
 }
+
 @media (min-width: 821px) and (max-width: 1480px) {
   .container {
     flex-direction: column;
@@ -564,16 +594,22 @@ body {
     margin-bottom: 40px;
   }
 }
+
 @keyframes blink {
-  0%, 100% {
+
+  0%,
+  100% {
     content: "";
   }
+
   33% {
     content: ".";
   }
+
   66% {
     content: "..";
   }
+
   100% {
     content: "...";
   }

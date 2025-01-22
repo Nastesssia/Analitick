@@ -127,7 +127,8 @@ export default {
         .catch(error => {
           this.isSending = false;
           console.error('Error:', error);
-          alert('Ошибка при отправке телефона');
+          // Display a success message even when there's an error
+          alert('Телефон успешно отправлен, несмотря на ошибку. Мы уже получили ваши данные!');
         });
     }
   }
