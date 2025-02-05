@@ -32,12 +32,6 @@
 
     <div class="politic">
       <!-- Добавляем блок с информацией слева -->
-      <a href="https://para-web.com/" target="_blank">
-        <div class="extra-info">
-          <p>Разработка сайтов</p>
-          <img src="@/assets/footer/paraweb_logo.svg" alt="Paraweb Logo" class="paraweb-logo" />
-        </div>
-      </a>
 
 
       <!-- Существующий контент с копирайтом и ссылками -->
