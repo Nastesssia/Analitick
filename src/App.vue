@@ -1,4 +1,5 @@
 <template>
+  
   <div id="App">
     <input class="side-menu" type="checkbox" id="side-menu" />
     <label class="hamb" for="side-menu"><span class="hamb-line"></span></label>
@@ -14,25 +15,49 @@
     </nav>
     <section id="upsection" class="upsection" draggable="false">
       <!-- Ваш код для верхней секции страницы -->
-      <img class="imglogo_forDev" :src="logoSrc" :alt="logoAlt" draggable="false">
+      <img
+        class="imglogo_forDev"
+        :src="logoSrc"
+        :alt="logoAlt"
+        draggable="false"
+      />
       <header class="header" id="#header">
         <div class="hrefheader">
-          <img class="imglogo" :src="logoSrc" :alt="logoAlt" draggable="false">
+          <img
+            class="imglogo"
+            :src="logoSrc"
+            :alt="logoAlt"
+            draggable="false"
+          />
           <div class="headerItems">
-            <a @click="scrollToSection('#upsection')" class="hrefheaderItem">главная</a>
-            <a @click="scrollToSection('#info')" class="hrefheaderItem">о компании</a>
-            <a @click="scrollToSection('#service')" class="hrefheaderItem">услуги</a>
-            <a @click="scrollToSection('#contacts')" class="hrefheaderItem">контакты</a>
+            <a @click="scrollToSection('#upsection')" class="hrefheaderItem"
+              >главная</a
+            >
+            <a @click="scrollToSection('#info')" class="hrefheaderItem"
+              >о компании</a
+            >
+            <a @click="scrollToSection('#service')" class="hrefheaderItem"
+              >услуги</a
+            >
+            <a @click="scrollToSection('#contacts')" class="hrefheaderItem"
+              >контакты</a
+            >
             <div class="number">
-              <a :href="'tel:' + phoneNumber" style="color: white; text-decoration: none;">
+              <a
+                :href="'tel:' + phoneNumber"
+                style="color: white; text-decoration: none"
+              >
                 {{ phoneNumber }}
               </a>
             </div>
-
           </div>
         </div>
         <div class="maininfo">
-          <h1>ПРОФЕССИОНАЛЬНАЯ <br> ПОМОЩЬ В РЕШЕНИИ<br> ЮРИДИЧЕСКИХ ПРОБЛЕМ</h1>
+          <h1>
+            ПРОФЕССИОНАЛЬНАЯ <br />
+            ПОМОЩЬ В РЕШЕНИИ<br />
+            ЮРИДИЧЕСКИХ ПРОБЛЕМ
+          </h1>
           <h2>ЭФФЕКТИВНОЕ БУХГАЛТЕРСКОЕ ОБСЛУЖИВАНИЕ</h2>
           <button @click="scrollToAsk">ОСТАВИТЬ ЗАЯВКУ</button>
         </div>
@@ -43,24 +68,33 @@
     <individ />
     <entity />
     <ask />
+
     <contacts />
+    <!-- <news />
+    <dzen /> -->
+
     <footername />
     <div class="none"></div>
   </div>
 </template>
 <script>
-import info from './components/info.vue';
-import individ from './components/individ.vue';
-import entity from './components/entity.vue';
-import ask from './components/ask.vue';
-import contacts from './components/contacts.vue';
-import footername from './components/footername.vue';
+
+import info from "./components/info.vue";
+import individ from "./components/individ.vue";
+import entity from "./components/entity.vue";
+import ask from "./components/ask.vue";
+import dzen from "./components/dzen.vue";
+import news from "./components/news.vue";
+import contacts from "./components/contacts.vue";
+import footername from "./components/footername.vue";
 export default {
   components: {
     info,
     individ,
     entity,
     ask,
+    dzen,
+    news,
     contacts,
     footername,
   },
@@ -68,33 +102,32 @@ export default {
     scrollToSection(sectionId) {
       const sectionElement = document.querySelector(sectionId);
       if (sectionElement) {
-        sectionElement.scrollIntoView({ behavior: 'smooth' });
+        sectionElement.scrollIntoView({ behavior: "smooth" });
       }
     },
     scrollToAsk() {
-      const askElement = document.getElementById('ask');
+      const askElement = document.getElementById("ask");
       if (askElement) {
-        askElement.scrollIntoView({ behavior: 'smooth' });
+        askElement.scrollIntoView({ behavior: "smooth" });
       }
-    }
+    },
   },
   data() {
     return {
-      logoSrc: 'src/assets/header/logo.png',
-      logoAlt: 'Company Logo',
-      phoneNumber: '+7 (4012) 37-72-97',
+      logoSrc: "src/assets/header/logo.png",
+      logoAlt: "Company Logo",
+      phoneNumber: "+7 (4012) 37-72-97",
     };
-  }
+  },
 };
 </script>
 
-
 <!-- Стили -->
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap");
 
 body {
-  font-family: 'Source Serif 4', serif;
+  font-family: "Source Serif 4", serif;
   margin: 0px;
   padding: 0px;
   -webkit-box-sizing: border-box;
@@ -104,13 +137,11 @@ body {
   box-sizing: border-box;
 }
 
-
 .menu,
 .nav,
 .side-menu,
 .hamb {
   display: none;
-
 }
 
 .imglogo_forDev {
@@ -179,14 +210,14 @@ img {
 .header .hrefheader a,
 .header,
 .header .profile img {
-  color: #3D210B;
+  color: #3d210b;
   text-decoration: none;
 }
 
 .number {
   position: relative;
   color: white;
-  background-color: #970E0E;
+  background-color: #970e0e;
   height: 100px;
   width: 170px;
   display: flex;
@@ -214,7 +245,7 @@ img {
 }
 
 .maininfo button {
-  font-family: 'Source Serif 4', serif;
+  font-family: "Source Serif 4", serif;
   margin-top: 50px;
   width: 260px;
   font-size: 20px;
@@ -222,14 +253,12 @@ img {
   border: none;
   border-radius: 10px;
   color: white;
-  background-color: #970E0E;
+  background-color: #970e0e;
   transition: background-color 0.3s;
-  ;
 }
 
 .maininfo button:hover {
   background-color: #750b0b;
-
 }
 
 .popup-overlay {
@@ -246,7 +275,7 @@ img {
 }
 
 .popup {
-  background-color: #FFF;
+  background-color: #fff;
   padding: 20px;
   border-radius: 10px;
   width: 50%;
@@ -317,8 +346,8 @@ img {
 
   :root {
     --white: #f9f9f9;
-    --yellow: #FEF9ED;
-    --brown: #3D210B;
+    --yellow: #fef9ed;
+    --brown: #3d210b;
   }
 
   a {
@@ -341,20 +370,19 @@ img {
     position: fixed;
     background-color: var(--yellow);
     overflow: hidden;
-    border: 1px solid #3D210B;
+    border: 1px solid #3d210b;
     border-radius: 0 0 0 20px;
     max-height: 0;
     position: relative;
     float: right;
     top: 0;
-
   }
 
   .menu a {
     font-size: 3vw;
     display: block;
     padding-left: 5px;
-    
+
     padding: 10px;
     color: var(--brown);
   }
@@ -368,7 +396,7 @@ img {
     right: 15px;
     /* Выравниваем кнопку по правому краю nav */
     padding: 45px 20px;
-    background-color: #970E0E;
+    background-color: #970e0e;
     z-index: 999;
     /* Устанавливаем высокий z-index, чтобы кнопка была поверх других элементов */
   }
@@ -379,17 +407,16 @@ img {
     height: 2px;
     position: relative;
     width: 24px;
-
   }
 
   .hamb-line::before,
   .hamb-line::after {
     background: var(--white);
-    content: '';
+    content: "";
     display: block;
     height: 100%;
     position: absolute;
-    transition: all .2s ease-out;
+    transition: all 0.2s ease-out;
     width: 100%;
   }
 
@@ -411,17 +438,16 @@ img {
     height: 2px;
     position: relative;
     width: 24px;
-
   }
 
   .hamb-line::before,
   .hamb-line::after {
     background: var(--white);
-    content: '';
+    content: "";
     display: block;
     height: 100%;
     position: absolute;
-    transition: all .2s ease-out;
+    transition: all 0.2s ease-out;
     width: 100%;
   }
 
@@ -438,24 +464,24 @@ img {
   }
 
   /* Toggle menu icon */
-  .side-menu:checked~nav {
+  .side-menu:checked ~ nav {
     max-height: 100%;
   }
 
-  .side-menu:not(:checked)~.nav {
+  .side-menu:not(:checked) ~ .nav {
     border: none;
   }
 
-  .side-menu:checked~.hamb .hamb-line {
+  .side-menu:checked ~ .hamb .hamb-line {
     background: transparent;
   }
 
-  .side-menu:checked~.hamb .hamb-line::before {
+  .side-menu:checked ~ .hamb .hamb-line::before {
     transform: rotate(-45deg);
     top: 0;
   }
 
-  .side-menu:checked~.hamb .hamb-line::after {
+  .side-menu:checked ~ .hamb .hamb-line::after {
     transform: rotate(45deg);
     top: 0;
   }

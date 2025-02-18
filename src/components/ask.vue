@@ -4,49 +4,132 @@
   </div>
   <div id="ask" class="container">
     <div class="img-container">
-      <img class="left-image" src="/src/assets/section_ask/ask_me_img.jpg" alt="image" draggable="false">
-
+      <img
+        class="left-image"
+        src="/src/assets/section_ask/ask_me_img.jpg"
+        alt="image"
+        draggable="false"
+      />
     </div>
     <div class="form-container">
       <h2>{{ formTitle }}</h2>
       <p class="form-container-description">{{ formDescription }}</p>
       <div class="form">
-        <input type="text" :placeholder="surnamePlaceholder" v-model="surname" class="input-field" required
-          maxlength="20" autocomplete="family-name"><br>
-        <input type="text" :placeholder="namePlaceholder" v-model="name" class="input-field" required maxlength="20"
-          autocomplete="given-name"><br>
-        <input type="text" :placeholder="patronymicPlaceholder" v-model="patronymic" required maxlength="20"
-          class="input-field" autocomplete="additional-name"><br>
-        <input type="text" @input="formatPhone" v-mask="'+7 (###) ###-####'" v-model="phone"
-          :placeholder="phonePlaceholder" required maxlength="17" class="input-field" autocomplete="tel">
-        <input type="text" :placeholder="emailPlaceholder" v-model="email" required maxlength="70" class="input-field"
-          autocomplete="email"><br>
-        <textarea type="text" :placeholder="problemPlaceholder" v-model="problem" style="height: 100px;"
-          class="input-field" maxlength="5000"></textarea><br>
-        <input type="file" id="fileInput" ref="fileInput" style="display:none;" @change="handleFileUpload">
+        <input
+          type="text"
+          :placeholder="surnamePlaceholder"
+          v-model="surname"
+          class="input-field"
+          required
+          maxlength="20"
+          autocomplete="family-name"
+        /><br />
+        <input
+          type="text"
+          :placeholder="namePlaceholder"
+          v-model="name"
+          class="input-field"
+          required
+          maxlength="20"
+          autocomplete="given-name"
+        /><br />
+        <input
+          type="text"
+          :placeholder="patronymicPlaceholder"
+          v-model="patronymic"
+          required
+          maxlength="20"
+          class="input-field"
+          autocomplete="additional-name"
+        /><br />
+        <input
+          type="text"
+          @input="formatPhone"
+          v-mask="'+7 (###) ###-####'"
+          v-model="phone"
+          :placeholder="phonePlaceholder"
+          required
+          maxlength="17"
+          class="input-field"
+          autocomplete="tel"
+        />
+        <input
+          type="text"
+          :placeholder="emailPlaceholder"
+          v-model="email"
+          required
+          maxlength="70"
+          class="input-field"
+          autocomplete="email"
+        /><br />
+        <textarea
+          type="text"
+          :placeholder="problemPlaceholder"
+          v-model="problem"
+          style="height: 100px"
+          class="input-field"
+          maxlength="5000"
+        ></textarea
+        ><br />
+        <input
+          type="file"
+          id="fileInput"
+          ref="fileInput"
+          style="display: none"
+          @change="handleFileUpload"
+        />
         <div class="containerAddFile">
           <div class="file-list">
-            <div v-for="(fileItem, index) in fileList" :key="index" class="file-list-item">
-              <div>{{ fileItem.file.name }} ({{ (fileItem.file.size / 1024 / 1024).toFixed(2) }} MB)</div>
+            <div
+              v-for="(fileItem, index) in fileList"
+              :key="index"
+              class="file-list-item"
+            >
+              <div>
+                {{ fileItem.file.name }} ({{
+                  (fileItem.file.size / 1024 / 1024).toFixed(2)
+                }}
+                MB)
+              </div>
               <span v-if="fileItem.isLoading" class="loading-circle"></span>
               <span v-else class="check-mark">✔</span>
               <button @click="removeFile(index)">✖</button>
             </div>
           </div>
           <label for="fileInput" class="file-upload-label">
-            <img src="@/assets/section_ask/plus.png" alt="Выбрать файлы" width="40" height="40">
-            <p class="fileAttach">Прикрепить файл<br>(Не более 5 и до 25МБ)</p>
+            <img
+              src="@/assets/section_ask/plus.png"
+              alt="Выбрать файлы"
+              width="40"
+              height="40"
+            />
+            <p class="fileAttach">
+              Прикрепить файл<br />(Не более 5 и до 25МБ)
+            </p>
           </label>
-          <input type="file" id="fileInput" ref="fileInput" style="display:none;" @change="handleFileUpload">
+          <input
+            type="file"
+            id="fileInput"
+            ref="fileInput"
+            style="display: none"
+            @change="handleFileUpload"
+          />
         </div>
       </div>
       <div class="politic">
         <p class="politic_text">
           Нажимая кнопку отправить, вы выражаете согласие на передачу и
-          обработку <br> персональных данных в соответствии с
-          <a href="politic.html" style="text-decoration: underline; color: #3D210B;">политикой конфиденциальности</a>.
+          обработку <br />
+          персональных данных в соответствии с
+          <a
+            href="politic.html"
+            style="text-decoration: underline; color: #3d210b"
+            >политикой конфиденциальности</a
+          >.
         </p>
-        <button @click="sendFormData" :disabled="isLoading">{{ buttonText }}</button>
+        <button @click="sendFormData" :disabled="isLoading">
+          {{ buttonText }}
+        </button>
       </div>
     </div>
   </div>
@@ -60,20 +143,20 @@
 </template>
 
 <script>
-import axios from 'axios';
-import validator from 'validator';
-import { mask } from 'vue-the-mask';
+import axios from "axios";
+import validator from "validator";
+import { mask } from "vue-the-mask";
 
 export default {
   directives: {
-    mask
+    mask,
   },
   data() {
     return {
       fileList: [],
       isLoading: false,
       phoneFormatted: false,
-      
+
       formTitle: "Задайте нам вопрос",
       formDescription: "Мы ответим вам в кратчайшие сроки",
       surnamePlaceholder: "Фамилия",
@@ -83,14 +166,14 @@ export default {
       emailPlaceholder: "E-mail",
       problemPlaceholder: "Опишите вашу проблему",
       buttonText: "Отправить",
-      imageSrcPlus: '@/assets/section_ask/plus.png',
-      surname: '',
-      name: '',
-      patronymic: '',
-      phone: '',
-      email: '',
-      problem: '',
-      alert: { show: false, message: '', type: 'error' }
+      imageSrcPlus: "@/assets/section_ask/plus.png",
+      surname: "",
+      name: "",
+      patronymic: "",
+      phone: "",
+      email: "",
+      problem: "",
+      alert: { show: false, message: "", type: "error" },
     };
   },
   methods: {
@@ -98,17 +181,17 @@ export default {
       const files = event.target.files;
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        if (file.size > 1024 * 1024 * 25) { 
-          this.showAlert('Файл слишком большой (не более 25 МБ)');
+        if (file.size > 1024 * 1024 * 25) {
+          this.showAlert("Файл слишком большой (не более 25 МБ)");
           continue;
         }
         if (this.fileList.length >= 5) {
-          this.showAlert('Максимальное количество файлов 5');
+          this.showAlert("Максимальное количество файлов 5");
           continue;
         }
         const fileWithStatus = {
           file: file,
-          isLoading: true 
+          isLoading: true,
         };
         this.fileList.push(fileWithStatus);
         setTimeout(() => {
@@ -121,91 +204,87 @@ export default {
     },
     sendFormData() {
       if (!this.surname || !this.name || !this.email || !this.problem) {
-        this.showAlert('Заполните все обязательные поля: Фамилия, Имя, Email, Проблема.');
+        this.showAlert(
+          "Заполните все обязательные поля: Фамилия, Имя, Email, Проблема.",
+          "error"
+        );
         return;
       }
       if (!validator.isEmail(this.email)) {
-        this.showAlert('Введите корректный электронный адрес.');
+        this.showAlert("Введите корректный электронный адрес.", "error");
         return;
       }
-
       this.isLoading = true;
       const formData = new FormData();
-      formData.append('surname', this.surname);
-      formData.append('name', this.name);
-      formData.append('patronymic', this.patronymic);
-      formData.append('phone', this.phone);
-      formData.append('email', this.email);
-      formData.append('problem', this.problem);
-      this.fileList.forEach(file => {
-        formData.append('files[]', file.file);
+      formData.append("surname", this.surname);
+      formData.append("name", this.name);
+      formData.append("patronymic", this.patronymic);
+      formData.append("phone", this.phone);
+      formData.append("email", this.email);
+      formData.append("problem", this.problem);
+      this.fileList.forEach((file) => {
+        formData.append("files[]", file.file);
       });
-
-      axios.post('https://analitikgroup.ru/send-email.php', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      })
-      .then(() => {
-        this.showAlert('Ваша заявка успешно отправлена!', 'success');
-        this.resetForm();
-        this.disableSubmitButton();
-      })
-      .catch(() => {
-        this.showAlert('Заявка отправлена! Мы свяжемся с вами в ближайшее время.', 'success');
-        this.resetForm();
-        this.disableSubmitButton();
-      })
-      .finally(() => {
-        this.isLoading = false;
-      });
+      axios
+        .post("https://analitikgroup.ru/send-email.php", formData)
+        .then(() => {
+          this.showAlert("Ваша заявка успешно отправлена!", "success");
+          this.resetForm();
+        })
+        .catch(() => {
+          this.showAlert(
+            "Заявка отправлена! Мы свяжемся с вами в ближайшее время.",
+            "success"
+          );
+          this.resetForm();
+        })
+        .finally(() => {
+          this.isLoading = false;
+        });
     },
     disableSubmitButton() {
-      this.isLoading = true; 
-      this.buttonText = 'Заявка отправлена!';
+      this.isLoading = true;
+      this.buttonText = "Заявка отправлена!";
       setTimeout(() => {
-        this.buttonText = 'Отправить';
-        this.isLoading = false; 
+        this.buttonText = "Отправить";
+        this.isLoading = false;
       }, 30000);
     },
     formatPhone() {
       const firstPart = "+7 (8";
       if (this.phone.startsWith(firstPart) && !this.phoneFormatted) {
         this.phone = "+7 (" + this.phone.slice(firstPart.length);
-        this.phoneFormatted = true; 
+        this.phoneFormatted = true;
       }
     },
-    showAlert(message, type = 'success') {
+    showAlert(message, type) {
       this.alert.message = message;
       this.alert.type = type;
       this.alert.show = true;
-
-      const alertIcon = type === 'success' ? '✔' : '⚠';
-      this.alert.message = `${alertIcon} ${message}`;
-
-      setTimeout(() => (this.alert.show = false), 5000);
+      setTimeout(() => { this.alert.show = false; }, 5000);
     },
     closeAlert() {
       this.alert.show = false;
     },
     resetForm() {
-      this.surname = '';
-      this.name = '';
-      this.patronymic = '';
-      this.phone = '';
-      this.email = '';
-      this.problem = '';
+      this.surname = "";
+      this.name = "";
+      this.patronymic = "";
+      this.phone = "";
+      this.email = "";
+      this.problem = "";
       this.fileList = [];
     },
     removeFile(index) {
       this.fileList.splice(index, 1);
-    }
-  }
+    },
+  },
 };
 </script>
 
-
 <style>
 body {
-  color: #3D210B;
+  color: #3d210b;
   margin: 0;
   padding: 0;
 }
@@ -226,7 +305,7 @@ body {
 }
 
 .custom-alert.alert-success {
-  background-color: #4CAF50;
+  background-color: #4caf50;
   /* зеленый цвет фона для успеха */
 }
 
@@ -249,7 +328,6 @@ body {
   font-size: 32px;
   /* Увеличенный размер для большей видимости */
   cursor: pointer;
-
 }
 
 .containerAddFile {
@@ -281,7 +359,7 @@ body {
   background: none;
   border: none;
   cursor: pointer;
-  color: #970E0E;
+  color: #970e0e;
   white-space: nowrap;
 }
 
@@ -326,15 +404,13 @@ body {
   }
 }
 
-
 .check-mark {
   color: green;
   font-size: 20px;
 }
 
-
 .dots::after {
-  content: '';
+  content: "";
   animation: blink 1.5s steps(1, end) infinite;
 }
 
@@ -346,11 +422,11 @@ body {
   height: 140px;
   padding: 10px;
   width: 13vw;
-  background-color: #F6F5F3;
+  background-color: #f6f5f3;
   border-radius: 5px;
   margin-bottom: 10px;
-  color: #9E9085;
-  border: 1px solid #3D210B;
+  color: #9e9085;
+  border: 1px solid #3d210b;
   overflow-y: auto;
 }
 
@@ -399,7 +475,6 @@ body {
   margin-left: 0;
   margin-right: 0;
   margin-bottom: 20px;
-
 }
 
 .fileAttach {
@@ -411,7 +486,6 @@ body {
 .file-upload-label {
   margin-right: 15px;
   margin-left: 15px;
-
 }
 
 .file-upload-label img {
@@ -433,15 +507,15 @@ body {
 }
 
 .input-field {
-  font-family: 'Source Serif 4', serif;
+  font-family: "Source Serif 4", serif;
   width: 100%;
-  background-color: #F6F5F3;
+  background-color: #f6f5f3;
   font-size: 0.8vw;
   padding: 10px;
   border-radius: 5px;
   margin-bottom: 10px;
-  color: #9E9085;
-  border: 1px solid #3D210B;
+  color: #9e9085;
+  border: 1px solid #3d210b;
   resize: vertical;
   /* Разрешает изменение размера только вертикально */
   overflow-y: scroll;
@@ -468,7 +542,7 @@ body {
   border: none;
   border-radius: 10px;
   color: white;
-  background-color: #970E0E;
+  background-color: #970e0e;
   cursor: pointer;
   transition: background-color 0.3s;
   font-family: "Source Serif 4", sans-serif;
@@ -476,7 +550,6 @@ body {
 
 .politic button:hover {
   background-color: #750b0b;
-
 }
 
 @media (max-width: 820px) {
@@ -501,7 +574,6 @@ body {
 
   .form-container {
     width: 70%;
-
   }
 
   .form-container h2 {
@@ -558,7 +630,6 @@ body {
 
   .form-container {
     width: 70%;
-
   }
 
   .form-container h2 {
@@ -596,7 +667,6 @@ body {
 }
 
 @keyframes blink {
-
   0%,
   100% {
     content: "";
