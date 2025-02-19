@@ -1,84 +1,62 @@
 <template>
-  
   <div id="App">
-    <input class="side-menu" type="checkbox" id="side-menu" />
-    <label class="hamb" for="side-menu"><span class="hamb-line"></span></label>
-    <!-- Menu -->
-    <!-- Шапка -->
-    <nav class="nav">
-      <ul class="menu">
-        <li><a @click="scrollToSection('#upsection')">главная</a></li>
-        <li><a @click="scrollToSection('#info')">о компании</a></li>
-        <li><a @click="scrollToSection('#service')">услуги</a></li>
-        <li><a @click="scrollToSection('#contacts')">контакты</a></li>
-      </ul>
-    </nav>
-    <section id="upsection" class="upsection" draggable="false">
-      <!-- Ваш код для верхней секции страницы -->
-      <img
-        class="imglogo_forDev"
-        :src="logoSrc"
-        :alt="logoAlt"
-        draggable="false"
-      />
-      <header class="header" id="#header">
-        <div class="hrefheader">
-          <img
-            class="imglogo"
-            :src="logoSrc"
-            :alt="logoAlt"
-            draggable="false"
-          />
-          <div class="headerItems">
-            <a @click="scrollToSection('#upsection')" class="hrefheaderItem"
-              >главная</a
-            >
-            <a @click="scrollToSection('#info')" class="hrefheaderItem"
-              >о компании</a
-            >
-            <a @click="scrollToSection('#service')" class="hrefheaderItem"
-              >услуги</a
-            >
-            <a @click="scrollToSection('#contacts')" class="hrefheaderItem"
-              >контакты</a
-            >
-            <div class="number">
-              <a
-                :href="'tel:' + phoneNumber"
-                style="color: white; text-decoration: none"
-              >
-                {{ phoneNumber }}
-              </a>
+    <!-- Если НЕ login, lawyer, assistant - показываем сайт -->
+    <div v-if="!['/login', '/lawyer', '/assistant'].includes($route.path)">
+      <input class="side-menu" type="checkbox" id="side-menu" />
+      <label class="hamb" for="side-menu"><span class="hamb-line"></span></label>
+
+      <nav class="nav">
+        <ul class="menu">
+          <li><a @click="scrollToSection('#upsection')">главная</a></li>
+          <li><a @click="scrollToSection('#info')">о компании</a></li>
+          <li><a @click="scrollToSection('#service')">услуги</a></li>
+          <li><a @click="scrollToSection('#contacts')">контакты</a></li>
+        </ul>
+      </nav>
+
+      <section id="upsection" class="upsection" draggable="false">
+        <img class="imglogo_forDev" :src="logoSrc" :alt="logoAlt" draggable="false" />
+        <header class="header" id="header">
+          <div class="hrefheader">
+            <img class="imglogo" :src="logoSrc" :alt="logoAlt" draggable="false" />
+            <div class="headerItems">
+              <a @click="scrollToSection('#upsection')" class="hrefheaderItem">главная</a>
+              <a @click="scrollToSection('#info')" class="hrefheaderItem">о компании</a>
+              <a @click="scrollToSection('#service')" class="hrefheaderItem">услуги</a>
+              <a @click="scrollToSection('#contacts')" class="hrefheaderItem">контакты</a>
+              <div class="number">
+                <a :href="'tel:' + phoneNumber" style="color: white; text-decoration: none">
+                  {{ phoneNumber }}
+                </a>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="maininfo">
-          <h1>
-            ПРОФЕССИОНАЛЬНАЯ <br />
-            ПОМОЩЬ В РЕШЕНИИ<br />
-            ЮРИДИЧЕСКИХ ПРОБЛЕМ
-          </h1>
-          <h2>ЭФФЕКТИВНОЕ БУХГАЛТЕРСКОЕ ОБСЛУЖИВАНИЕ</h2>
-          <button @click="scrollToAsk">ОСТАВИТЬ ЗАЯВКУ</button>
-        </div>
-      </header>
-    </section>
-    <!-- Другие компоненты -->
-    <info />
-    <individ />
-    <entity />
-    <ask />
+          <div class="maininfo">
+            <h1>ПРОФЕССИОНАЛЬНАЯ <br />ПОМОЩЬ В РЕШЕНИИ<br />ЮРИДИЧЕСКИХ ПРОБЛЕМ</h1>
+            <h2>ЭФФЕКТИВНОЕ БУХГАЛТЕРСКОЕ ОБСЛУЖИВАНИЕ</h2>
+            <button @click="scrollToAsk">ОСТАВИТЬ ЗАЯВКУ</button>
+          </div>
+        </header>
+      </section>
 
-    <contacts />
-    <!-- <news />
-    <dzen /> -->
+      <!-- Другие компоненты сайта -->
+      <info />
+      <individ />
+      <entity />
+      <ask />
+      <contacts />
+      <news />
+      <dzen />
+      <footername />
+      <div class="none"></div>
+    </div>
 
-    <footername />
-    <div class="none"></div>
+    <!-- Здесь загружаются login, lawyer, assistant -->
+    <router-view v-if="['/login', '/lawyer', '/assistant'].includes($route.path)" />
   </div>
 </template>
-<script>
 
+<script>
 import info from "./components/info.vue";
 import individ from "./components/individ.vue";
 import entity from "./components/entity.vue";
@@ -87,6 +65,7 @@ import dzen from "./components/dzen.vue";
 import news from "./components/news.vue";
 import contacts from "./components/contacts.vue";
 import footername from "./components/footername.vue";
+
 export default {
   components: {
     info,
@@ -94,7 +73,7 @@ export default {
     entity,
     ask,
     dzen,
-    news,
+    // news,
     contacts,
     footername,
   },
@@ -121,6 +100,7 @@ export default {
   },
 };
 </script>
+
 
 <!-- Стили -->
 <style>

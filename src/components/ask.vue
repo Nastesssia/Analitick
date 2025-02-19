@@ -76,6 +76,7 @@
           id="fileInput"
           ref="fileInput"
           style="display: none"
+          multiple
           @change="handleFileUpload"
         />
         <div class="containerAddFile">
@@ -107,13 +108,6 @@
               Прикрепить файл<br />(Не более 5 и до 25МБ)
             </p>
           </label>
-          <input
-            type="file"
-            id="fileInput"
-            ref="fileInput"
-            style="display: none"
-            @change="handleFileUpload"
-          />
         </div>
       </div>
       <div class="politic">
@@ -141,7 +135,6 @@
     </div>
   </div>
 </template>
-
 <script>
 import axios from "axios";
 import validator from "validator";
@@ -169,26 +162,48 @@ export default {
       imageSrcPlus: "@/assets/section_ask/plus.png",
       surname: "",
       name: "",
-      patronymic: "",
+      patronymic: localStorage.getItem("patronymic") || "",
       phone: "",
-      email: "",
+      email: localStorage.getItem("email") || "",
       problem: "",
       alert: { show: false, message: "", type: "error" },
     };
   },
+  watch: {
+    patronymic(newVal) {
+      localStorage.setItem("patronymic", newVal);
+    },
+    email(newVal) {
+      localStorage.setItem("email", newVal);
+    },
+  },
   methods: {
     handleFileUpload(event) {
       const files = event.target.files;
+      const forbiddenExtensions = [".zip", ".rar", ".7z"];
+
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
+        const fileName = file.name.toLowerCase();
+
         if (file.size > 1024 * 1024 * 25) {
-          this.showAlert("Файл слишком большой (не более 25 МБ)");
-          continue;
+          this.showAlert("Файл слишком большой (не более 25 МБ)", "error");
+          return;
         }
+
+        if (forbiddenExtensions.some((ext) => fileName.endsWith(ext))) {
+          this.showAlert(
+            "Файлы форматов ZIP, RAR, 7Z не поддерживаются. Пожалуйста, прикрепите ссылку в поле (Описании проблемы)",
+            "error"
+          );
+          return;
+        }
+
         if (this.fileList.length >= 5) {
-          this.showAlert("Максимальное количество файлов 5");
-          continue;
+          this.showAlert("Максимальное количество файлов 5", "error");
+          return;
         }
+
         const fileWithStatus = {
           file: file,
           isLoading: true,
@@ -261,7 +276,9 @@ export default {
       this.alert.message = message;
       this.alert.type = type;
       this.alert.show = true;
-      setTimeout(() => { this.alert.show = false; }, 5000);
+      setTimeout(() => {
+        this.alert.show = false;
+      }, 5000);
     },
     closeAlert() {
       this.alert.show = false;
@@ -295,7 +312,7 @@ body {
   left: 50%;
   transform: translateX(-50%);
   width: 80%;
-  max-width: 600px;
+  max-width: 700px;
   padding: 20px;
   color: white;
   text-align: center;
@@ -322,7 +339,7 @@ body {
   position: absolute;
   top: 50%;
   /* Центрирование относительно вертикали контента */
-  right: 5px;
+  right: -15px;
   transform: translateY(-50%);
   /* Смещение по Y для точного центрирования */
   font-size: 32px;
