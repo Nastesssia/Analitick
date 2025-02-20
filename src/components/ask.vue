@@ -75,8 +75,8 @@
           type="file"
           id="fileInput"
           ref="fileInput"
-          style="display: none"
           multiple
+          style="display: none"
           @change="handleFileUpload"
         />
         <div class="containerAddFile">
@@ -108,6 +108,7 @@
               Прикрепить файл<br />(Не более 5 и до 25МБ)
             </p>
           </label>
+   
         </div>
       </div>
       <div class="politic">
@@ -135,6 +136,7 @@
     </div>
   </div>
 </template>
+
 <script>
 import axios from "axios";
 import validator from "validator";
@@ -162,40 +164,22 @@ export default {
       imageSrcPlus: "@/assets/section_ask/plus.png",
       surname: "",
       name: "",
-      patronymic: localStorage.getItem("patronymic") || "",
+      patronymic: "",
       phone: "",
-      email: localStorage.getItem("email") || "",
+      email: "",
       problem: "",
       alert: { show: false, message: "", type: "error" },
     };
   },
-  watch: {
-    patronymic(newVal) {
-      localStorage.setItem("patronymic", newVal);
-    },
-    email(newVal) {
-      localStorage.setItem("email", newVal);
-    },
-  },
   methods: {
     handleFileUpload(event) {
       const files = event.target.files;
-      const forbiddenExtensions = [".zip", ".rar", ".7z"];
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const fileName = file.name.toLowerCase();
 
         if (file.size > 1024 * 1024 * 25) {
           this.showAlert("Файл слишком большой (не более 25 МБ)", "error");
-          return;
-        }
-
-        if (forbiddenExtensions.some((ext) => fileName.endsWith(ext))) {
-          this.showAlert(
-            "Файлы форматов ZIP, RAR, 7Z не поддерживаются. Пожалуйста, прикрепите ссылку в поле (Описании проблемы)",
-            "error"
-          );
           return;
         }
 

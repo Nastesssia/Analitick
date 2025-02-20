@@ -6,10 +6,50 @@ require 'vendor/autoload.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use Google\Client;
+use Google\Service\Drive;
 
 header('Content-Type: application/json');
 
 $response = [];
+
+// Функция для авторизации в Google API
+function getGoogleClient() {
+    $client = new Client();
+    $client->setAuthConfig('/home/ana6087438/analitikgroup.ru/docs/credentials.json');
+    $client->addScope(Drive::DRIVE_FILE);
+    $client->setAccessType('offline');
+    return $client;
+}
+
+// Функция загрузки файла на Google Drive и получения ссылки
+function uploadFileToDrive($filePath, $fileName, $parentFolderId = null) {
+    $client = getGoogleClient();
+    $driveService = new Drive($client);
+
+    $fileMetadata = new Drive\DriveFile([
+        'name' => $fileName,
+        'parents' => $parentFolderId ? [$parentFolderId] : []
+    ]);
+
+    $content = file_get_contents($filePath);
+    $file = $driveService->files->create($fileMetadata, [
+        'data' => $content,
+        'mimeType' => mime_content_type($filePath),
+        'uploadType' => 'multipart',
+        'fields' => 'id'
+    ]);
+
+    // Предоставляем доступ только юристу
+    $driveService->permissions->create($file->id, new Drive\Permission([
+        'type' => 'user',
+        'role' => 'reader',
+        'emailAddress' => 'i@aleksandr-kabanov.ru' // Email юриста
+    ]));
+
+    return "https://drive.google.com/file/d/" . $file->id . "/view";
+}
+
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $surname = strip_tags(trim($_POST["surname"]));
@@ -29,7 +69,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $mail = new PHPMailer(true);
     try {
-        // Настройка SMTP
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
@@ -37,107 +76,51 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $mail->Password = 'rhkt eykw wrrk fevo';
         $mail->SMTPSecure = 'ssl';
         $mail->Port = 465;
-        $mail->CharSet = 'UTF-8'; // Установка кодировки
+        $mail->CharSet = 'UTF-8';
 
-        // Отправитель
         $mail->setFrom('i@aleksandr-kabanov.ru', $email);
-
-        // Получатель - юрист
         $mail->addAddress('i@aleksandr-kabanov.ru', 'Юрист');
-
-        // Ответ пользователю
         $mail->addReplyTo($email, $email);
 
-        // Сбор имен файлов
         $fileNames = [];
-        if (!empty($_FILES['files']['name'][0])) {
-            $allowed_types = [
-                'image/jpeg',
-                'image/png',
-                'image/gif', // для изображений
-                'application/pdf',
-                'application/x-rar-compressed',
-                'application/rar',
-                'application/zip',
-                'application/x-zip-compressed', // для архивов
-                'application/msword',
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // для документов Word
-                'application/vnd.ms-excel',
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // для документов Excel
-                'application/vnd.ms-powerpoint',
-                'application/vnd.openxmlformats-officedocument.presentationml.presentation', // для презентаций PowerPoint
-                'application/octet-stream',
-                'text/plain',
-                'text/csv',
-                'application/xml',
-                'text/html',
-                'audio/mpeg',
-                'audio/wav',
-                'video/mp4', // для прочих файлов
-                'application/json',
-                'application/vnd.ms-access',
-                'application/x-shockwave-flash',
-                'image/svg+xml',
-                'application/x-7z-compressed',
-                'application/x-tar',
-                'application/x-iwork-pages-sffpages' // для специфичных файлов
-            ];
-            $forbiddenExtensions = ['php', 'phtml', 'exe', 'sh', 'js', 'html', 'htm', 'jsp', 'asp'];
-            $maxFileSize = 25 * 1024 * 1024; // 25 MB
+        $parentFolderId = '1m1IQWVmhz7BZFXw_g8st2BI5sCGhjSdi';
+// Расширения для загрузки на Google Drive
+$driveExtensions = ['7z', 'zip', 'rar'];
+     if (!empty($_FILES['files']['name'][0])) {
+    foreach ($_FILES['files']['tmp_name'] as $i => $fileTmpPath) {
+        $fileName = $_FILES['files']['name'][$i];
+        $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
-
-            foreach ($_FILES['files']['name'] as $i => $file_name) {
-                $fileTmpPath = $_FILES['files']['tmp_name'][$i];
-                $fileSize = $_FILES['files']['size'][$i];
-                $fileType = $_FILES['files']['type'][$i];
-                $fileExtension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-                $realMime = mime_content_type($fileTmpPath);
-
-                // Проверка реального MIME-типа
-                if (!in_array($realMime, $allowed_types)) {
-                    error_log("Ошибка: файл {$file_name} имеет недопустимый формат!");
-                    continue;
+        if (is_uploaded_file($fileTmpPath)) {
+            // Для архивных файлов создаем ссылку через Google Drive
+            if (in_array($fileExtension, $driveExtensions)) {
+                $link = uploadFileToDrive($fileTmpPath, $fileName, $parentFolderId);
+                if ($link) {
+                    $fileNames[] = "<li><a href='$link' target='_blank'>$fileName</a></li>";
                 }
-
-                // Проверка запрещенных расширений
-                if (in_array($fileExtension, $forbiddenExtensions)) {
-                    error_log("Ошибка: загрузка файлов типа .$fileExtension запрещена!");
-                    continue;
-                }
-
-                // Проверка размера файла
-                if ($fileSize > $maxFileSize) {
-                    error_log("Ошибка: файл {$file_name} слишком большой!");
-                    continue;
-                }
-
-                // Проверка загрузки через HTTP POST
-                if (!is_uploaded_file($fileTmpPath)) {
-                    error_log("Ошибка: возможная попытка взлома при загрузке файла!");
-                    continue;
-                }
-
-                // Добавляем вложение
-                $mail->addAttachment($fileTmpPath, $file_name);
-                $fileNames[] = $file_name;
+            } else {
+                // Все остальные файлы добавляем как вложение
+                $mail->addAttachment($fileTmpPath, $fileName);
+                $fileNames[] = "<li>$fileName</li>";
             }
         }
+    }
+}
 
-        // Текст письма
         $mail->isHTML(true);
         $mail->Subject = "Новая заявка с вашего сайта";
         $mail->Body = "<h3 style='margin-bottom: 10px;'>Заполнена заявка на сайте <a href='http://analitikgroup.ru/'>analitikgroup.ru</a></h3>
                       <hr style='border: 1px solid #970E0E; margin-bottom: 10px;'>
-                      <p style='margin: 4px 0;'><strong>Фамилия:</strong> $surname</p>
-                      <p style='margin: 4px 0;'><strong>Имя:</strong> $name</p>
-                      <p style='margin: 4px 0;'><strong>Отчество:</strong> $patronymic</p>
-                      <p style='margin: 4px 0;'><strong>Телефон:</strong> $phone</p>
-                      <p style='margin: 4px 0;'><strong>Email:</strong> $email</p>
-                      <p style='margin: 4px 0;'><strong>Проблема:</strong> $problem</p>
+                      <p><strong>Фамилия:</strong> $surname</p>
+                      <p><strong>Имя:</strong> $name</p>
+                      <p><strong>Отчество:</strong> $patronymic</p>
+                      <p><strong>Телефон:</strong> $phone</p>
+                      <p><strong>Email:</strong> $email</p>
+                      <p><strong>Проблема:</strong> $problem</p>
                       <hr style='border: 1px solid #970E0E; margin-top: 10px;'>
-                      <p style='margin: 4px 0;'><strong>Файлы:</strong></p>
-                      <ul style='margin: 2px 0;'>"
-                      . implode("\n", array_map(fn($file) => "<li>$file</li>", $fileNames)) .
+                      <p><strong>Файлы:</strong></p>
+                      <ul>"
+                      . implode("\n", $fileNames) .
                       "</ul>
                       <hr style='border: 1px solid #970E0E; margin-top: 10px;'>
                       <p>Я, <strong>$surname $name $patronymic</strong>, выражаю согласие на передачу и обработку персональных данных.</p>
