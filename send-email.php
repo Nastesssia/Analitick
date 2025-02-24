@@ -14,7 +14,8 @@ header('Content-Type: application/json');
 $response = [];
 
 // Функция для авторизации в Google API
-function getGoogleClient() {
+function getGoogleClient()
+{
     $client = new Client();
     $client->setAuthConfig('/home/ana6087438/analitikgroup.ru/docs/credentials.json');
     $client->addScope(Drive::DRIVE_FILE);
@@ -23,7 +24,8 @@ function getGoogleClient() {
 }
 
 // Функция загрузки файла на Google Drive и получения ссылки
-function uploadFileToDrive($filePath, $fileName, $parentFolderId = null) {
+function uploadFileToDrive($filePath, $fileName, $parentFolderId = null)
+{
     $client = getGoogleClient();
     $driveService = new Drive($client);
 
@@ -84,48 +86,88 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         $fileNames = [];
         $parentFolderId = '1m1IQWVmhz7BZFXw_g8st2BI5sCGhjSdi';
-// Расширения для загрузки на Google Drive
-$driveExtensions = ['7z', 'zip', 'rar'];
-     if (!empty($_FILES['files']['name'][0])) {
-    foreach ($_FILES['files']['tmp_name'] as $i => $fileTmpPath) {
-        $fileName = $_FILES['files']['name'][$i];
-        $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        // Расширения для загрузки на Google Drive
+        $driveExtensions = ['7z', 'zip', 'rar'];
+        if (!empty($_FILES['files']['name'][0])) {
+            foreach ($_FILES['files']['tmp_name'] as $i => $fileTmpPath) {
+                $fileName = $_FILES['files']['name'][$i];
+                $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
-        if (is_uploaded_file($fileTmpPath)) {
-            // Для архивных файлов создаем ссылку через Google Drive
-            if (in_array($fileExtension, $driveExtensions)) {
-                $link = uploadFileToDrive($fileTmpPath, $fileName, $parentFolderId);
-                if ($link) {
-                    $fileNames[] = "<li><a href='$link' target='_blank'>$fileName</a></li>";
+                if (is_uploaded_file($fileTmpPath)) {
+                    // Для архивных файлов создаем ссылку через Google Drive
+                    if (in_array($fileExtension, $driveExtensions)) {
+                        $link = uploadFileToDrive($fileTmpPath, $fileName, $parentFolderId);
+                        if ($link) {
+                            $fileNames[] = "<li><a href='$link' target='_blank'>$fileName</a></li>";
+                        }
+                    } else {
+                        // Все остальные файлы добавляем как вложение
+                        $mail->addAttachment($fileTmpPath, $fileName);
+                        $fileNames[] = "<li>$fileName</li>";
+                    }
                 }
-            } else {
-                // Все остальные файлы добавляем как вложение
-                $mail->addAttachment($fileTmpPath, $fileName);
-                $fileNames[] = "<li>$fileName</li>";
             }
         }
-    }
-}
+      // Создание содержимого Word "на лету"
+$wordContent = "
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <title>Заявка с сайта АналитикГрупп</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h3 { color: #970E0E; }
+        p, li { margin: 5px 0; }
+        hr { border: 1px solid #970E0E; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h3>Заявка на сайте <a href='http://analitikgroup.ru/'>analitikgroup.ru</a></h3>
+    <hr>
+    <p><strong>Фамилия:</strong> $surname</p>
+    <p><strong>Имя:</strong> $name</p>
+    <p><strong>Отчество:</strong> $patronymic</p>
+    <p><strong>Телефон:</strong> $phone</p>
+    <p><strong>Email:</strong> $email</p>
+    <p><strong>Проблема:</strong> $problem</p>
+    <hr>
+    <p><strong>Файлы:</strong></p>
+    <ul>" . implode("\n", $fileNames) . "</ul>
+    <hr>
+    <p>Я, <strong>$surname $name $patronymic</strong>, выражаю согласие на передачу и обработку персональных данных.</p>
+    <p><strong>Отправлено с IP адреса:</strong> " . $_SERVER['REMOTE_ADDR'] . "</p>
+    <p><em>Внимание! Это сообщение создается автоматически! Не отвечайте на него с помощью кнопки 'ответить (reply)'. Для связи с автором используйте контактные данные, указанные в теле письма.</em></p>
+</body>
+</html>
+";
+// Добавление Word-документа как вложения
+$mail->addStringAttachment($wordContent, 'Копия_' . $surname . '.docx', 'base64', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+
+
+
 
         $mail->isHTML(true);
         $mail->Subject = "Новая заявка с вашего сайта";
-        $mail->Body = "<h3 style='margin-bottom: 10px;'>Заполнена заявка на сайте <a href='http://analitikgroup.ru/'>analitikgroup.ru</a></h3>
+        $mail->Body = "
+                      <h3 style='margin-bottom: 10px;'>Заполнена заявка на сайте <a href='http://analitikgroup.ru/'>analitikgroup.ru</a></h3>
                       <hr style='border: 1px solid #970E0E; margin-bottom: 10px;'>
-                      <p><strong>Фамилия:</strong> $surname</p>
-                      <p><strong>Имя:</strong> $name</p>
-                      <p><strong>Отчество:</strong> $patronymic</p>
-                      <p><strong>Телефон:</strong> $phone</p>
-                      <p><strong>Email:</strong> $email</p>
-                      <p><strong>Проблема:</strong> $problem</p>
+                      <p style='margin: 4px 0;'><strong>Фамилия:</strong> $surname</p>
+                      <p style='margin: 4px 0;'><strong>Имя:</strong> $name</p>
+                      <p style='margin: 4px 0;'><strong>Отчество:</strong> $patronymic</p>
+                      <p style='margin: 4px 0;'><strong>Телефон:</strong> $phone</p>
+                      <p style='margin: 4px 0;'><strong>Email:</strong> $email</p>
+                      <p style='margin: 4px 0;'><strong>Проблема:</strong> $problem</p>
                       <hr style='border: 1px solid #970E0E; margin-top: 10px;'>
-                      <p><strong>Файлы:</strong></p>
-                      <ul>"
-                      . implode("\n", $fileNames) .
-                      "</ul>
+                      <p style='margin: 4px 0;'><strong>Файлы:</strong></p>
+                       <ul>"
+            . implode("\n", $fileNames) .
+            "</ul>
                       <hr style='border: 1px solid #970E0E; margin-top: 10px;'>
                       <p>Я, <strong>$surname $name $patronymic</strong>, выражаю согласие на передачу и обработку персональных данных.</p>
                       <p><strong>Отправлено с IP адреса:</strong> " . $_SERVER['REMOTE_ADDR'] . "</p>
-                      <p><em>Внимание! Это сообщение создается автоматически! Не отвечайте на него с помощью кнопки 'ответить (reply)'. Для связи с автором используйте контактные данные, указанные в теле письма.</em></p>";
+                      <p><em>Внимание! Это сообщение создается автоматически! Не отвечайте на него с помощью кнопки 'ответить (reply)'. Для связи с автором используйте контактные данные, указанные в теле письма.</em></p>
+                      ";
 
         // Отправляем письмо юристу
         $mail->send();
