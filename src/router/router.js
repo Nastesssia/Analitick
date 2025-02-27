@@ -16,23 +16,38 @@ const router = createRouter({
   routes
 });
 
-// Проверка перед переходом на защищенные страницы
-router.beforeEach((to, from, next) => {
-    const userRole = sessionStorage.getItem('role'); // ✅ Теперь используем sessionStorage
-    const isAuthenticated = !!userRole; 
-  
-    if (to.meta.requiresAuth) {
-      if (!isAuthenticated) {
-        next('/login'); // Если не авторизован, отправляем на страницу входа
-      } else if (to.meta.role && to.meta.role !== userRole) {
-        next('/login'); // ❌ Вместо редиректа на главную, теперь отправляем на страницу входа
-      } else {
-        next();
-      }
-    } else {
-      next();
+async function checkAuth(to, from, next) {
+    try {
+        const response = await fetch('/check_auth.php', {
+            method: 'GET',
+            credentials: 'include'
+        });
+
+        const data = await response.json();
+        console.log('Ответ от check_auth.php:', data);
+
+        if (data.success) {
+            if (to.meta.role && to.meta.role !== data.role) {
+                alert('У вас нет доступа к этой странице.');
+                next('/login');
+            } else {
+                next();
+            }
+        } else {
+            next('/login');
+        }
+    } catch (error) {
+        console.error('Ошибка проверки авторизации:', error);
+        next('/login');
     }
-  });
-  
+}
+
+router.beforeEach((to, from, next) => {
+    if (to.meta.requiresAuth) {
+        checkAuth(to, from, next);
+    } else {
+        next();
+    }
+});
 
 export default router;

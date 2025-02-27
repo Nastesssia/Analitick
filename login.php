@@ -15,8 +15,8 @@ if (empty($username) || empty($password)) {
     exit();
 }
 
-// Проверяем пользователя в базе
-$stmt = $conn->prepare("SELECT id, password, role, failed_attempts, last_failed_attempt FROM users WHERE username = ?");
+// Проверяем пользователя в базе данных
+$stmt = $conn->prepare("SELECT id, password, role FROM users WHERE username = ?");
 $stmt->bind_param("s", $username);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -28,34 +28,13 @@ if (!$user) {
     exit();
 }
 
-// Проверяем, прошло ли 5 минут с последней ошибки
-$now = time();
-$lastAttemptTime = strtotime($user['last_failed_attempt']);
-
-if ($user['failed_attempts'] >= 5 && ($now - $lastAttemptTime) < 300) { // 300 секунд = 5 минут
-    echo json_encode(["success" => false, "message" => "Слишком много попыток. Подождите 5 минут."]);
-    exit();
-}
-
-// Проверяем пароль
+// Проверка пароля
 if (password_verify($password, $user['password'])) {
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['role'] = $user['role'];
 
-    // Сбрасываем счетчик попыток после успешного входа
-    $stmt = $conn->prepare("UPDATE users SET failed_attempts = 0, last_failed_attempt = NULL WHERE id = ?");
-    $stmt->bind_param("i", $user['id']);
-    $stmt->execute();
-    $stmt->close();
-
     echo json_encode(["success" => true, "role" => $user['role']]);
 } else {
-    // Увеличиваем счетчик неудачных попыток
-    $stmt = $conn->prepare("UPDATE users SET failed_attempts = failed_attempts + 1, last_failed_attempt = NOW() WHERE id = ?");
-    $stmt->bind_param("i", $user['id']);
-    $stmt->execute();
-    $stmt->close();
-
     echo json_encode(["success" => false, "message" => "Неверный логин или пароль"]);
 }
 ?>

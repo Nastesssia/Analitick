@@ -21,13 +21,14 @@ class DB_Functions {
      * Storing new submission
      * returns boolean true on success
      */
-    public function saveSubmission($surname, $name, $patronymic, $phone, $email, $problem) {
-        $stmt = $this->conn->prepare("INSERT INTO form_submissions (surname, name, patronymic, phone, email, problem, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
-        $stmt->bind_param("ssssss", $surname, $name, $patronymic, $phone, $email, $problem);
+    public function saveSubmission($surname, $name, $patronymic, $phone, $email, $problem, $fileLinksJson) {
+        $stmt = $this->conn->prepare("INSERT INTO form_submissions (surname, name, patronymic, phone, email, problem, file_links, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
+        $stmt->bind_param("sssssss", $surname, $name, $patronymic, $phone, $email, $problem, $fileLinksJson);
         $result = $stmt->execute();
         $stmt->close();
         return $result;
     }
+    
 }
 
 ?>

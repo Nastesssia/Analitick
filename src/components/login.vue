@@ -1,84 +1,68 @@
 <template>
-    <div class="login-container">
-      <div class="login-box">
-        <h2>Вход</h2>
-        <p class="warning-text">После 5 неудачных попыток аккаунт будет заблокирован на 5 минут.</p>
-        <p class="warning-text">Сессия истечёт через 3 часа после входа.</p>
-  
-        <div class="input-group">
-          <input v-model="username" type="text" placeholder="Имя пользователя" />
-        </div>
-        <div class="input-group">
-          <input v-model="password" type="password" placeholder="Пароль" />
-        </div>
-        <button class="login-button" @click="login">Войти</button>
-  
-        <!-- Кастомный alert-сообщение -->
-        <transition name="fade">
-          <div v-if="error" class="custom-alert">{{ error }}</div>
-        </transition>
+  <div class="login-container">
+    <div class="login-box">
+      <h2>Вход</h2>
+      <p class="warning-text">После 5 неудачных попыток аккаунт будет заблокирован на 5 минут.</p>
+      <p class="warning-text">Сессия истечёт через 3 часа после входа.</p>
+
+      <div class="input-group">
+        <input v-model="username" type="text" placeholder="Имя пользователя" />
       </div>
+      <div class="input-group">
+        <input v-model="password" type="password" placeholder="Пароль" />
+      </div>
+      <button class="login-button" @click="login">Войти</button>
+
+      <transition name="fade">
+        <div v-if="error" class="custom-alert">{{ error }}</div>
+      </transition>
     </div>
-  </template>
-  
-  <script>
-  import axios from "axios";
-  
-  export default {
-    data() {
-      return {
-        username: "",
-        password: "",
-        error: "",
-      };
-    },
-    methods: {
-      async login() {
-        try {
-          console.log("Отправляем запрос...");
-  
-          const response = await axios.post("/login.php", {
-            username: this.username,
-            password: this.password,
-          });
-  
-          if (response.data.success) {
-            console.log("Ответ сервера: Успешный вход");
-  
-            // ❌ Убрали localStorage, теперь используем sessionStorage
-            sessionStorage.setItem("role", response.data.role);
-  
-            // ✅ Автоматический выход через 3 часа (10800000 мс)
-            setTimeout(() => {
-              sessionStorage.clear();
-              this.$router.push("/login");
-            }, 3 * 60 * 60 * 1000);
-  
-            // ✅ Перенаправляем в кабинет
-            setTimeout(() => {
-              if (response.data.role === "lawyer") {
-                this.$router.push("/lawyer");
-              } else {
-                this.$router.push("/assistant");
-              }
-            }, 100);
-          } else {
-            console.log(`Ответ сервера: Ошибка - ${response.data.message}`);
-            this.showError(response.data.message);
-          }
-        } catch {
-          console.log("Ошибка сервера");
-          this.showError("Ошибка сервера. Попробуйте позже.");
+  </div>
+</template>
+
+<script>
+import axios from "axios";
+
+export default {
+  data() {
+    return {
+      username: "",
+      password: "",
+      error: "",
+    };
+  },
+  methods: {
+    async login() {
+      try {
+        console.log("Отправляем запрос...");
+
+        const response = await axios.post("/login.php", {
+          username: this.username,
+          password: this.password,
+        }, { withCredentials: true });
+
+        console.log("Ответ от login.php:", response.data);
+
+        if (response.data.success) {
+          this.$router.push(response.data.role === "lawyer" ? "/lawyer" : "/assistant");
+        } else {
+          this.showError(response.data.message);
         }
-      },
-  
-      showError(message) {
-        this.error = message;
-        setTimeout(() => (this.error = ""), 5000);
-      },
+      } catch (error) {
+        console.error("Ошибка сервера:", error);
+        this.showError("Ошибка сервера. Попробуйте позже.");
+      }
     },
-  };
-  </script>
+
+    showError(message) {
+      this.error = message;
+      setTimeout(() => (this.error = ""), 5000);
+    },
+  },
+};
+</script>
+
+
   
   
   

@@ -3,7 +3,7 @@ ini_set("log_errors", 1);
 ini_set("error_log", "/home/ana6087438/analitikgroup.ru/docs/php_errors.log");
 
 require 'vendor/autoload.php';
-
+require_once 'DB_Functions.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 use Google\Client;
@@ -12,7 +12,7 @@ use Google\Service\Drive;
 header('Content-Type: application/json');
 
 $response = [];
-
+$db = new DB_Functions();
 // Функция для авторизации в Google API
 function getGoogleClient()
 {
@@ -42,11 +42,10 @@ function uploadFileToDrive($filePath, $fileName, $parentFolderId = null)
         'fields' => 'id'
     ]);
 
-    // Предоставляем доступ только юристу
     $driveService->permissions->create($file->id, new Drive\Permission([
         'type' => 'user',
         'role' => 'reader',
-        'emailAddress' => 'i@aleksandr-kabanov.ru' // Email юриста
+        'emailAddress' => 'i@aleksandr-kabanov.ru' 
     ]));
 
     return "https://drive.google.com/file/d/" . $file->id . "/view";
@@ -68,8 +67,55 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         echo json_encode($response);
         exit;
     }
-
+    $fileLinks = [];
+    $fileNames = [];
+    $parentFolderId = '1m1IQWVmhz7BZFXw_g8st2BI5sCGhjSdi';
+    // Расширения для загрузки на Google Drive
+    $linkExtensions = ['7z', 'zip', 'rar'];
     $mail = new PHPMailer(true);
+
+    
+    if (!empty($_FILES['files']['name'][0])) {
+        foreach ($_FILES['files']['tmp_name'] as $i => $fileTmpPath) {
+            $fileName = $_FILES['files']['name'][$i];
+            $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+    
+            if (is_uploaded_file($fileTmpPath)) {
+                // Загружаем файл на Google Drive и получаем ссылку
+                $link = uploadFileToDrive($fileTmpPath, $fileName, $parentFolderId);
+                error_log("Ссылка на файл: " . $link);
+                if ($link) {
+                    $fileLinks[] = [
+                        'url' => $link,
+                        'name' => $fileName
+                    ]; // Сохраняем ссылку и название файла в базу данных
+    
+                    // В письме: ссылки только для архивов, остальные - как вложения
+                    if (in_array($fileExtension, $linkExtensions)) {
+                        $fileNames[] = "<li><a href='$link' target='_blank'>$fileName</a></li>";
+                    } else {
+                        $mail->addAttachment($fileTmpPath, $fileName);
+                        $fileNames[] = "<li>$fileName</li>";
+                    }
+                }
+            }
+        }
+    }
+    
+    
+    $fileLinksJson = json_encode($fileLinks);
+    error_log("JSON ссылок на файлы: " . $fileLinksJson);
+    // Сохранение данных в базу данных
+    $saveResult = $db->saveSubmission($surname, $name, $patronymic, $phone, $email, $problem, $fileLinksJson);
+    error_log("Результат сохранения данных в БД: " . ($saveResult ? 'успех' : 'ошибка'));
+
+    if (!$saveResult) {
+        $response['status'] = 'error';
+        $response['message'] = 'Ошибка при сохранении данных в базу данных.';
+        echo json_encode($response);
+        exit;
+    }
+    error_log("Перед отправкой письма. Ссылки на файлы: " . $fileLinksJson);
     try {
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';
@@ -84,32 +130,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $mail->addAddress('i@aleksandr-kabanov.ru', 'Юрист');
         $mail->addReplyTo($email, $email);
 
-        $fileNames = [];
-        $parentFolderId = '1m1IQWVmhz7BZFXw_g8st2BI5sCGhjSdi';
-        // Расширения для загрузки на Google Drive
-        $driveExtensions = ['7z', 'zip', 'rar'];
-        if (!empty($_FILES['files']['name'][0])) {
-            foreach ($_FILES['files']['tmp_name'] as $i => $fileTmpPath) {
-                $fileName = $_FILES['files']['name'][$i];
-                $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-
-                if (is_uploaded_file($fileTmpPath)) {
-                    // Для архивных файлов создаем ссылку через Google Drive
-                    if (in_array($fileExtension, $driveExtensions)) {
-                        $link = uploadFileToDrive($fileTmpPath, $fileName, $parentFolderId);
-                        if ($link) {
-                            $fileNames[] = "<li><a href='$link' target='_blank'>$fileName</a></li>";
-                        }
-                    } else {
-                        // Все остальные файлы добавляем как вложение
-                        $mail->addAttachment($fileTmpPath, $fileName);
-                        $fileNames[] = "<li>$fileName</li>";
-                    }
-                }
-            }
-        }
-      // Создание содержимого Word "на лету"
-$wordContent = "
+     
+        // Создание содержимого Word "на лету"
+        $wordContent = "
 <!DOCTYPE html>
 <html>
 <head>
@@ -141,8 +164,8 @@ $wordContent = "
 </body>
 </html>
 ";
-// Добавление Word-документа как вложения
-$mail->addStringAttachment($wordContent, 'Копия_' . $surname . '.docx', 'base64', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        // Добавление Word-документа как вложения
+        $mail->addStringAttachment($wordContent, 'Копия_' . $surname . '.doc', 'base64', 'application/msword');
 
 
 

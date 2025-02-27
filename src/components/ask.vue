@@ -202,9 +202,9 @@ export default {
       }
     },
     sendFormData() {
-      if (!this.surname || !this.name || !this.email || !this.problem) {
+      if (!this.surname || !this.name || !this.email || !this.problem || !this.phone || !this.patronymic) {
         this.showAlert(
-          "Заполните все обязательные поля: Фамилия, Имя, Email, Проблема.",
+          "Заполните все обязательные поля: Фамилия, Имя, Email, Проблема, Телефон, Отчество",
           "error"
         );
         return;
