@@ -165,7 +165,7 @@
             <td>{{ submission.id }}</td>
             <td>{{ new Date(submission.created_at).toLocaleString() }}</td>
             <td>{{ submission.assistant_sent_at ? new Date(submission.assistant_sent_at).toLocaleString() : 'Не указано'
-              }}</td>
+            }}</td>
             <td>{{ submission.surname }}</td>
             <td>{{ submission.name }}</td>
             <td>{{ submission.patronymic }}</td>
@@ -204,6 +204,8 @@
             <th>ID</th>
             <th>Дата создания</th>
             <th>Дата отправки помощнику</th>
+            <th>Дата решения помощником</th>
+            <th>Время на решение (минут)</th>
             <th>Фамилия</th>
             <th>Имя</th>
             <th>Отчество</th>
@@ -218,13 +220,25 @@
           <tr v-for="submission in resolvedSubmissions" :key="submission.id">
             <td>{{ submission.id }}</td>
             <td>{{ new Date(submission.created_at).toLocaleString() }}</td>
-            <td>{{ new Date(submission.assistant_sent_at).toLocaleString() }}</td>
+            <td>{{ submission.assistant_sent_at ? new Date(submission.assistant_sent_at).toLocaleString() : 'Не указано'
+              }}</td>
+            <td>{{ submission.assistant_resolved_at ? new Date(submission.assistant_resolved_at).toLocaleString() : 'Не   указано' }}</td>
+           
+            <td>{{ submission.resolution_time_minutes !== '—' ? submission.resolution_time_minutes : '—' }}</td>
+
+
             <td>{{ submission.surname }}</td>
             <td>{{ submission.name }}</td>
             <td>{{ submission.patronymic }}</td>
             <td>{{ submission.phone }}</td>
             <td>{{ submission.email }}</td>
-            <td>{{ submission.problem }}</td>
+            <td>
+              <span>
+                {{ submission.problem.length > 50 ? submission.problem.substring(0, 50) + '...' : submission.problem }}
+              </span>
+              <button class="view-button" @click="showFullProblem(submission.problem)">Просмотр</button>
+            </td>
+
             <td>
               <ul>
                 <li v-for="(file, index) in parseLinks(submission.file_links)" :key="index">
@@ -233,13 +247,16 @@
               </ul>
             </td>
             <td>
-              <button class="view-button" @click="showFullProblem(submission.problem)">Просмотр</button>
-            </td>
+    <button class="delete-button" @click="deleteSubmission(submission.id)">Удалить</button>
+</td>
+
           </tr>
         </tbody>
       </table>
       <p v-else>Нет решенных заявок.</p>
     </div>
+
+
 
     <div v-if="showModal" class="modal-overlay">
       <div class="modal-content">
@@ -287,28 +304,60 @@ export default {
   },
   methods: {
     async fetchSubmissions() {
-    try {
+      try {
         const response = await fetch(`/get_submissions.php?page=${this.currentPage}&itemsPerPage=${this.itemsPerPage}`, { credentials: 'include' });
-        const textData = await response.text(); // Получаем ответ в виде текста
-        console.log("📡 Ответ от сервера (сырые данные):", textData);
 
-        const data = JSON.parse(textData); // Пробуем парсить JSON
-        console.log("✅ Ответ от сервера (парсинг JSON):", data);
+        if (!response.ok) {
+          console.error('Ошибка ответа сервера:', response.status, response.statusText);
+          return;
+        }
+
+        const data = await response.json();
 
         if (data.success) {
-            this.submissions = data.submissions.sort((a, b) => b.id - a.id);
-            this.assistantSubmissions = data.assistantSubmissions.sort((a, b) => b.id - a.id);
-            this.deletedSubmissions = data.deletedSubmissions.sort((a, b) => b.id - a.id);
-            this.resolvedSubmissions = data.resolvedSubmissions.sort((a, b) => b.id - a.id);
-            this.totalCount = data.totalCount;
+          // Активные заявки
+          this.submissions = Array.isArray(data.submissions) ? data.submissions.sort((a, b) => b.id - a.id) : [];
+
+          // Отправленные помощнику
+          this.assistantSubmissions = Array.isArray(data.assistantSubmissions) ? data.assistantSubmissions.sort((a, b) => b.id - a.id) : [];
+
+          // Удаленные заявки
+          this.deletedSubmissions = Array.isArray(data.deletedSubmissions) ? data.deletedSubmissions.sort((a, b) => b.id - a.id) : [];
+
+          // Решенные заявки с корректным расчетом времени выполнения в минутах
+          if (Array.isArray(data.resolvedSubmissions)) {
+            this.resolvedSubmissions = data.resolvedSubmissions.map(submission => {
+              const sentAt = submission.assistant_sent_at ? new Date(submission.assistant_sent_at.replace(' ', 'T')) : null;
+              const resolvedAt = submission.assistant_resolved_at ? new Date(submission.assistant_resolved_at.replace(' ', 'T')) : null;
+
+              let resolutionTimeMinutes = '—';
+              if (sentAt && resolvedAt && !isNaN(sentAt) && !isNaN(resolvedAt)) {
+                const diffMs = resolvedAt - sentAt;
+                resolutionTimeMinutes = Math.floor(diffMs / 60000); // Разница в минутах
+              }
+
+              return {
+                ...submission,
+                assistant_resolved_at: submission.assistant_resolved_at || 'Не указано',
+                resolution_time_minutes: resolutionTimeMinutes !== '—' ? resolutionTimeMinutes : '—'
+              };
+            }).sort((a, b) => b.id - a.id);
+          } else {
+            this.resolvedSubmissions = [];
+          }
+
+          this.totalCount = data.totalCount;
         } else {
-            console.error('❌ Ошибка загрузки данных:', data.message);
+          console.error('Ошибка загрузки данных:', data.message);
         }
-    } catch (error) {
-        console.error('🛑 Ошибка парсинга JSON:', error);
+      } catch (error) {
+        console.error('Ошибка загрузки заявок:', error);
+      }
     }
-}
-,
+
+
+
+    ,
 
 
 
@@ -425,20 +474,56 @@ export default {
 
 
     ,
-
     async fetchSubmissions() {
       try {
         const response = await fetch(`/get_submissions.php?page=${this.currentPage}&itemsPerPage=${this.itemsPerPage}`, { credentials: 'include' });
+
+        if (!response.ok) {
+          console.error('Ошибка ответа сервера:', response.status, response.statusText);
+          return;
+        }
+
         const data = await response.json();
-        console.log("Ответ от сервера (Все заявки):", data);
 
         if (data.success) {
           // Активные заявки
-          this.submissions = data.submissions.sort((a, b) => b.id - a.id);
+          this.submissions = Array.isArray(data.submissions) ? data.submissions.sort((a, b) => b.id - a.id) : [];
+
           // Отправленные помощнику
-          this.assistantSubmissions = data.assistantSubmissions.sort((a, b) => b.id - a.id);
+          this.assistantSubmissions = Array.isArray(data.assistantSubmissions) ? data.assistantSubmissions.sort((a, b) => b.id - a.id) : [];
+
           // Удаленные заявки
-          this.deletedSubmissions = data.deletedSubmissions.sort((a, b) => b.id - a.id);
+          this.deletedSubmissions = Array.isArray(data.deletedSubmissions) ? data.deletedSubmissions.sort((a, b) => b.id - a.id) : [];
+          // Решенные заявки с более точным расчетом времени выполнения
+          if (Array.isArray(data.resolvedSubmissions)) {
+            this.resolvedSubmissions = data.resolvedSubmissions.map(submission => {
+              const sentAt = submission.assistant_sent_at ? new Date(submission.assistant_sent_at) : null;
+              const resolvedAt = submission.assistant_resolved_at ? new Date(submission.assistant_resolved_at) : null;
+
+              if (sentAt && resolvedAt) {
+                const durationMs = resolvedAt - sentAt; // Разница в миллисекундах
+                const durationMinutes = Math.floor(durationMs / (1000 * 60)); // Полные минуты
+                const durationSeconds = Math.floor((durationMs % (1000 * 60)) / 1000); // Оставшиеся секунды
+
+                const formattedDuration = `${durationMinutes} мин ${durationSeconds} сек`;
+
+                return {
+                  ...submission,
+                  resolution_time_minutes: durationMinutes > 0 || durationSeconds > 0 ? formattedDuration : 'Менее 1 сек'
+                };
+              } else {
+                return {
+                  ...submission,
+                  resolution_time_minutes: 'Не указано'
+                };
+              }
+            }).sort((a, b) => b.id - a.id);
+          } else {
+            this.resolvedSubmissions = [];
+          }
+
+
+
           this.totalCount = data.totalCount;
         } else {
           console.error('Ошибка загрузки данных:', data.message);
@@ -446,7 +531,9 @@ export default {
       } catch (error) {
         console.error('Ошибка загрузки заявок:', error);
       }
-    },
+    }
+
+    ,
 
     async deleteSubmission(id) {
       try {
@@ -517,6 +604,10 @@ export default {
 
 
 <style scoped>
+
+
+
+
 .return-button {
   background-color: #ffa500;
   color: white;
@@ -710,6 +801,11 @@ p {
   color: white;
   cursor: pointer;
 }
+.delete-button:hover {
+    background-color: #c9302c;
+}
+
+
 
 .restore-button {
   background-color: #5cb85c;

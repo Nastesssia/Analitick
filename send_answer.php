@@ -14,13 +14,14 @@ ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/php_errors.log');
 error_reporting(E_ALL);
 
+// Проверка авторизации
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'assistant') {
     echo json_encode(['success' => false, 'message' => 'Доступ запрещен.']);
     exit();
 }
 
+// Получение данных формы
 $data = $_POST;
-$submission_id = intval($data['submission_id'] ?? 0);
 $subject = $data['subject'] ?? '';
 $answer_text = $data['answer_text'] ?? '';
 $surname = $data['surname'] ?? '';
@@ -31,8 +32,32 @@ $email = $data['email'] ?? '';
 $problem = $data['problem'] ?? '';
 $file_links = json_decode($data['file_links'] ?? '[]', true);
 
-if (!$submission_id || empty($subject) || empty($answer_text)) {
+// Логирование данных
+error_log("📦 Полученные данные: " . json_encode($data, JSON_UNESCAPED_UNICODE));
+error_log("📂 Полученные файлы: " . json_encode($_FILES, JSON_UNESCAPED_UNICODE));
+
+// Проверка обязательных данных
+if (empty($subject) || empty($answer_text) || empty($email) || empty($problem)) {
     echo json_encode(['success' => false, 'message' => 'Некорректные данные для отправки ответа.']);
+    exit();
+}
+
+// Подключение к базе данных
+$db = new DB_Connect();
+$conn = $db->connect();
+
+// Поиск заявки по email и тексту проблемы
+$stmt = $conn->prepare("SELECT id FROM form_submissions WHERE email = ? AND problem = ? LIMIT 1");
+$stmt->bind_param("ss", $email, $problem);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows > 0) {
+    $submission = $result->fetch_assoc();
+    $submission_id = $submission['id'];
+    error_log("✅ Найдена заявка ID: {$submission_id}");
+} else {
+    echo json_encode(['success' => false, 'message' => 'Заявка не найдена.']);
     exit();
 }
 
@@ -97,19 +122,21 @@ try {
 
     // Отправка письма
     $mail->send();
+    error_log("📧 Письмо успешно отправлено.");
 
-    // Обновление статуса заявки в базе данных
-    $db = new DB_Connect();
-    $conn = $db->connect();
-
-    $stmt = $conn->prepare("UPDATE form_submissions SET resolved = 1, visible_to_assistant = 0 WHERE id = ?");
-    $stmt->bind_param("i", $submission_id);
-    $stmt->execute();
+  // Обновление статуса заявки и установка времени решения в базе данных
+$stmt = $conn->prepare("UPDATE form_submissions SET resolved = 1, visible_to_assistant = 0, assistant_resolved_at = NOW() WHERE id = ?");
+$stmt->bind_param("i", $submission_id);
+$stmt->execute();
 
     echo json_encode(['success' => true, 'message' => 'Ответ успешно отправлен.']);
+    error_log("✅ Заявка ID {$submission_id} успешно обновлена.");
 
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => 'Ошибка при отправке письма: ' . $e->getMessage()]);
+    error_log("❌ Ошибка при отправке письма: " . $e->getMessage());
 }
+
+$conn->close();
 
 ?>

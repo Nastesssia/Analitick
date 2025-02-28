@@ -1,35 +1,21 @@
 <template>
   <div class="container">
     <h1>Кабинет помощника</h1>
-    <p>Добро пожаловать в кабинет помощника. Здесь вы можете отправлять ответы на заявки и просматривать документы.</p>
+    <p>Отправляйте ответы на заявки и просматривайте документы.</p>
   </div>
-  <div class="dashboard">
-    <nav class="navbar">
+  <div class="navbar">
       <div class="tabs-container">
-        <button class="tab-button" :class="{ active: activeTab === 'active' }" @click="switchTab('active')">
-          Все заявки
-        </button>
-        <button class="tab-button" :class="{ active: activeTab === 'resolved' }" @click="switchTab('resolved')">
-          Решенные заявки
-        </button>
       </div>
       <button class="logout-button" @click="logout">Выйти</button>
-    </nav>
+    </div>
 
-    <!-- Таблица для активных заявок -->
+  <div class="dashboard">
     <div v-if="activeTab === 'active'">
       <h2>Все заявки</h2>
       <table class="submissions-table" v-if="paginatedSubmissions.length > 0">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Дата создания</th>
             <th>Дата отправки помощнику</th>
-            <th>Фамилия</th>
-            <th>Имя</th>
-            <th>Отчество</th>
-            <th>Телефон</th>
-            <th>Email</th>
             <th>Проблема</th>
             <th>Ссылки на файлы</th>
             <th>Действия</th>
@@ -37,14 +23,7 @@
         </thead>
         <tbody>
           <tr v-for="submission in paginatedSubmissions" :key="submission.id">
-            <td>{{ submission.id }}</td>
-            <td>{{ formatDate(submission.created_at) }}</td>
             <td>{{ formatDate(submission.assistant_sent_at) }}</td>
-            <td>{{ submission.surname }}</td>
-            <td>{{ submission.name }}</td>
-            <td>{{ submission.patronymic }}</td>
-            <td>{{ submission.phone }}</td>
-            <td>{{ submission.email }}</td>
             <td>
               <span>
                 {{ submission.problem.length > 50 ? submission.problem.substring(0, 50) + '...' : submission.problem }}
@@ -59,56 +38,56 @@
               </ul>
             </td>
             <td>
-              <button class="answer-button" @click="openAnswerModal(submission.id)">
-                Дать ответ на заявку
+              <button class="answer-button" @click="openAnswerModal(submission)">
+                Дать ответ
               </button>
             </td>
           </tr>
         </tbody>
       </table>
       <p v-else>Заявок пока нет.</p>
-      <!-- Pop-up окно для ответа на заявку -->
-      <div v-if="showAnswerModal" class="modal-overlay">
-        <div class="modal-content">
-          <h2>Ответ на заявку ID: {{ selectedSubmission?.id }}</h2>
+    </div>
 
-          <div class="form-group">
-            <label>Тема:</label>
-            <input v-model="answerSubject" type="text" placeholder="Введите тему ответа" maxlength="100"
-              class="input-field" />
-          </div>
+    <!-- Модальное окно для ответа на заявку -->
+    <div v-if="showAnswerModal" class="modal-overlay">
+      <div class="modal-content">
+        <h2>Ответ на заявку ID: {{ selectedSubmission?.id }}</h2>
 
-          <div class="form-group">
-            <label>Ответ:</label>
-            <textarea v-model="answerText" placeholder="Введите текст ответа" class="textarea-field"></textarea>
-          </div>
-          <div class="form-group">
-            <label>Прикрепить файлы (до 5 файлов, максимум 25 МБ):</label>
-            <input type="file" multiple @change="handleFileUpload" class="input-file"
-              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.txt" />
-            <p v-if="attachedFiles.length > 0">
-              Прикреплено файлов: {{ attachedFiles.length }} / 5
-            </p>
-            <ul class="attached-files">
-              <li v-for="(file, index) in attachedFiles" :key="index">
-                {{ file.name }}
-                <button class="remove-file" @click="removeFile(index)">✖</button>
-              </li>
-            </ul>
-          </div>
+        <div class="form-group">
+          <label>Тема:</label>
+          <input v-model="answerSubject" type="text" placeholder="Введите тему ответа" maxlength="100" />
+        </div>
 
-          <div class="modal-actions">
-            <button class="submit-button" @click="submitAnswer">Отправить</button>
-            <button class="close-button" @click="closeModal">Отмена</button>
+        <div class="form-group">
+          <label>Ответ:</label>
+          <textarea v-model="answerText" placeholder="Введите текст ответа"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Прикрепить файлы (до 5 файлов, максимум 25 МБ, запрещены .zip, .rar, .7z):</label>
+          <input type="file" multiple @change="handleFileUpload" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.txt" />
+          <p>Прикреплено файлов: {{ attachedFiles.length }} / 5</p>
+          <ul>
+            <li v-for="(file, index) in attachedFiles" :key="index">
+              {{ file.name }}
+              <button @click="removeFile(index)">✖</button>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Индикатор загрузки на весь экран -->
+        <div v-if="isLoading" class="global-loading-overlay">
+          <div class="global-loader">
+            <div class="spinner"></div>
+            <p>Загрузка... Пожалуйста, подождите</p>
           </div>
         </div>
-      </div>
 
-      <!-- Пагинация -->
-      <div class="pagination" v-if="totalPages > 1">
-        <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1">Назад</button>
-        <span>Страница {{ currentPage }} из {{ totalPages }}</span>
-        <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages">Вперед</button>
+
+        <div class="modal-actions">
+          <button @click="submitAnswer" :disabled="isLoading">Отправить</button>
+          <button @click="closeModal" :disabled="isLoading">Отмена</button>
+        </div>
       </div>
     </div>
 
@@ -123,6 +102,7 @@
 
   </div>
 </template>
+
 <script>
 export default {
   data() {
@@ -138,7 +118,8 @@ export default {
       itemsPerPage: 25,
       totalCount: 0,
       showModal: false,
-      fullProblemText: ''
+      fullProblemText: '',
+      isLoading: false,
     };
   },
   created() {
@@ -154,6 +135,24 @@ export default {
     }
   },
   methods: {
+    async logout() {
+      try {
+        const response = await fetch('/logout.php', { method: 'POST', credentials: 'include' });
+        if (response.ok) {
+          document.cookie.split(';').forEach((cookie) => {
+            const name = cookie.split('=')[0].trim();
+            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+          });
+          sessionStorage.clear();
+          localStorage.clear();
+          window.location.href = '/login';
+        } else {
+          console.error('Ошибка при завершении сессии на сервере');
+        }
+      } catch (error) {
+        console.error('Ошибка при выходе из системы:', error);
+      }
+    },
 
     async fetchSubmissions() {
       try {
@@ -188,9 +187,7 @@ export default {
       return new Date(dateString).toLocaleString();
     },
 
-    removeFile(index) {
-      this.attachedFiles.splice(index, 1);
-    },
+
 
     parseLinks(fileLinks) {
       try {
@@ -249,37 +246,52 @@ export default {
       this.attachedFiles = [];
       this.selectedSubmission = null;
     },
-
     openAnswerModal(submission) {
+      if (!submission) {
+        console.error("❌ Ошибка: Пустая заявка:", submission);
+        alert("Ошибка: Пустая заявка. Повторите попытку.");
+        return;
+      }
+
       this.selectedSubmission = submission;
       this.showAnswerModal = true;
       console.log("📂 Открыта заявка для ответа:", submission);
-    },
+    }
+    ,
 
     handleFileUpload(event) {
       const files = Array.from(event.target.files);
-      if (files.length > 5) {
-        alert("Максимум 5 файлов.");
-        return;
-      }
+      const combinedFiles = [...this.attachedFiles, ...files].slice(0, 5);
 
-      const invalidFiles = files.filter(file => file.size > 25 * 1024 * 1024);
+      // Запрещенные форматы
+      const forbiddenExtensions = ['.zip', '.rar', '.7z'];
+      const invalidFiles = combinedFiles.filter(file => {
+        const fileSizeValid = file.size <= 25 * 1024 * 1024;
+        const fileExtensionValid = !forbiddenExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+        return !fileSizeValid || !fileExtensionValid;
+      });
+
       if (invalidFiles.length > 0) {
-        alert("Каждый файл не должен превышать 25 МБ.");
+        alert("Файл не должен превышать 25 МБ и не может быть форматов .zip, .rar, .7z.");
         return;
       }
 
-      this.attachedFiles = files;
+      this.attachedFiles = combinedFiles;
+      event.target.value = null; // Сброс input file
     },
 
+    removeFile(index) {
+      this.attachedFiles.splice(index, 1);
+    },
     async submitAnswer() {
       if (!this.answerSubject || !this.answerText) {
         alert("Пожалуйста, заполните все поля!");
         return;
       }
 
+      console.log("📝 Отправляемая заявка:", this.selectedSubmission);
+
       const formData = new FormData();
-      formData.append('submission_id', this.selectedSubmission?.id || 0);
       formData.append('subject', this.answerSubject);
       formData.append('answer_text', this.answerText);
       formData.append('surname', this.selectedSubmission?.surname || '');
@@ -295,6 +307,8 @@ export default {
       });
 
       try {
+        this.isLoading = true; // Показать индикатор загрузки
+
         const response = await fetch('/send_answer.php', {
           method: 'POST',
           body: formData,
@@ -302,6 +316,7 @@ export default {
         });
 
         const data = await response.json();
+        console.log("📡 Ответ от сервера:", data);
 
         if (data.success) {
           alert('Ответ успешно отправлен.');
@@ -312,8 +327,11 @@ export default {
         }
       } catch (error) {
         console.error('Ошибка при отправке ответа:', error);
-      }
+      } finally {
+        this.isLoading = false; // Скрыть индикатор загрузки в любом случае
     }
+    }
+
 
   }
 };
@@ -321,171 +339,208 @@ export default {
 
 
 <style scoped>
-/* Модальное окно */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
+/* Основные стили */
+body, p, h1, h2, label, button, input, textarea {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
 }
 
-.modal-content {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  max-width: 500px;
-  width: 90%;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  text-align: center;
+body {
+    background-color: #f2f2f2;
+    color: #3f3f3f;
+    padding: 20px;
+}
+
+/* Контейнер */
+.container {
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    background-color: white;
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+h1 {
+    font-size: 3rem;
+    color: #970e0e;
+    margin-bottom: 20px;
+    background-color: #970e0e;
+    -webkit-background-clip: text;
+    color: transparent;
+}
+
+/* Текстовые элементы */
+p {
+    font-size: 1.2rem;
+    color: #555;
 }
 
 h2 {
-  margin-top: 0;
-  font-size: 1.8rem;
-  color: #333;
-}
-
-.form-group {
-  margin-bottom: 15px;
-  text-align: left;
+    font-size: 2rem;
+    margin-bottom: 20px;
+    color: #3f3f3f;
 }
 
 label {
-  display: block;
-  margin-bottom: 5px;
-  color: #555;
-  font-weight: bold;
+    font-weight: bold;
+    margin-bottom: 5px;
+    display: block;
 }
 
-.input-field,
-.textarea-field,
-.input-file {
-  width: 100%;
-  padding: 8px;
-  margin-top: 5px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  font-size: 1rem;
-  box-sizing: border-box;
+/* Форма */
+.form-group {
+    margin-bottom: 15px;
+    text-align: left;
 }
 
-textarea.textarea-field {
-  height: 100px;
-  resize: vertical;
+input[type="text"],
+textarea,
+input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-top: 8px;
+    margin-bottom: 15px;
+    background-color: #f2f2f2;
+    color: #3f3f3f;
+    font-size: 1rem;
 }
 
-.modal-actions {
-  margin-top: 20px;
-  display: flex;
-  justify-content: space-between;
+textarea {
+    height: 120px;
+    resize: vertical;
 }
 
-.submit-button,
-.close-button {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.3s;
+/* Кнопки */
+button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s;
+    color: white;
+    background-color: #970e0e;
+
 }
 
 .submit-button {
-  background-color: #28a745;
-  color: white;
+    background-color: #970e0e;
 }
 
 .submit-button:hover {
-  background-color: #218838;
+    background-color: #b91010;
 }
 
 .close-button {
-  background-color: #dc3545;
-  color: white;
+    background-color: #3f3f3f;
 }
 
 .close-button:hover {
-  background-color: #c82333;
+    background-color: #2c2c2c;
 }
 
-p {
-  color: #888;
-  font-size: 0.9rem;
-  margin: 10px 0 0;
+.answer-button {
+    background-color: #5bc0de;
 }
 
-/* Общие стили */
-h1 {
-  font-size: 3rem;
-  color: #333;
-  margin: 0;
-  padding: 20px;
-  text-align: center;
-  background-color: #970e0e;
-  -webkit-background-clip: text;
-  color: transparent;
+.answer-button:hover {
+    background-color: #31b0d5;
 }
 
-p {
-  font-size: 1.2rem;
-  color: #555;
+.expand-button {
+    background-color: #5bc0de;
+    margin-left: 10px;
 }
 
-.container {
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  background-color: white;
-  max-width: 800px;
-  /* Увеличим ширину для более комфортного отображения */
-  margin: 0 auto;
-  /* Центрируем контейнер */
-  text-align: center;
+.expand-button:hover {
+    background-color: #31b0d5;
 }
 
-.dashboard {
-  padding: 20px;
+/* Модальное окно */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 
-/* Навигационная панель */
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  background-color: #f2f2f2;
-  padding: 10px;
-  border-radius: 8px;
+.modal-content {
+    background: #e4e1dc;
+    padding: 30px;
+    border-radius: 12px;
+    max-width: 600px;
+    width: 90%;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    text-align: left;
 }
 
-/* Вкладки */
-.tabs-container {
-  display: flex;
-  gap: 10px;
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
 }
 
-.tab-button {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
-  background-color: #e0e0e0;
-  color: #333;
-  cursor: pointer;
-  transition: 0.3s;
+/* Таблица */
+.submissions-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.tab-button.active {
-  background-color: #970e0e;
-  color: white;
+.submissions-table th,
+.submissions-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
 }
 
-/* Кнопка выхода */
+.submissions-table th {
+    background-color: #f2f2f2;
+    color: #333;
+}
+
+/* Индикатор загрузки */
+.global-loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    backdrop-filter: blur(4px);
+}
+
+.global-loader {
+    text-align: center;
+    color: white;
+}
+
+.spinner {
+    border: 6px solid rgba(255, 255, 255, 0.3);
+    border-top: 6px solid #970e0e;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
 .logout-button {
   padding: 10px 20px;
   background-color: #970e0e;
@@ -493,165 +548,23 @@ p {
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: 0.3s;
+  transition: background-color 0.3s;
+  font-size: 1rem;
 }
 
 .logout-button:hover {
   background-color: #b91010;
 }
-
-/* Таблица заявок */
-.submissions-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
-.submissions-table th,
-.submissions-table td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: left;
-}
 
-.submissions-table th {
-  background-color: #f2f2f2;
-  color: #333;
-}
 
-/* Кнопки действий */
-.answer-button,
-.delete-button,
-.restore-button,
-.return-button,
-.expand-button,
-.close-button,
-.submit-button {
-  padding: 8px 12px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: 0.3s;
-  color: white;
-}
 
-.answer-button {
-  background-color: #5bc0de;
-}
-
-.answer-button:hover {
-  background-color: #31b0d5;
-}
-
-.delete-button {
-  background-color: #d9534f;
-}
-
-.delete-button:hover {
-  background-color: #c9302c;
-}
-
-.restore-button {
-  background-color: #5cb85c;
-}
-
-.restore-button:hover {
-  background-color: #4cae4c;
-}
-
-.return-button {
-  background-color: #ffa500;
-}
-
-.return-button:hover {
-  background-color: #ff8c00;
-}
-
-.expand-button {
-  background-color: #5bc0de;
-}
-
-.expand-button:hover {
-  background-color: #31b0d5;
-}
-
-.close-button {
-  background-color: #d9534f;
-  margin-top: 20px;
-}
-
-.close-button:hover {
-  background-color: #c9302c;
-}
-
-.submit-button {
-  background-color: #970e0e;
-}
-
-.submit-button:hover {
-  background-color: #b91010;
-}
-
-/* Стили для модального окна */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  max-width: 600px;
-  width: 90%;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  text-align: center;
-}
-
-textarea {
-  width: 100%;
-  min-height: 100px;
-  padding: 10px;
-  border-radius: 5px;
-  border: 1px solid #ddd;
-  margin-bottom: 10px;
-  resize: vertical;
-}
-
-/* Пагинация */
-.pagination {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-}
-
-.pagination button {
-  padding: 8px 12px;
-  margin: 0 5px;
-  border: none;
-  border-radius: 5px;
-  background-color: #e0e0e0;
-  color: #333;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.pagination button.active {
-  background-color: #970e0e;
-  color: white;
-}
-
-.pagination button:hover {
-  background-color: #b91010;
-  color: white;
-}
 </style>

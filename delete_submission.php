@@ -17,7 +17,8 @@ if ($id <= 0) {
     exit();
 }
 
-$query = "UPDATE form_submissions SET deleted = 1 WHERE id = ?";
+// Обновляем статус заявки на удаленную (deleted = 1) и снимаем статус решенной (resolved = 0)
+$query = "UPDATE form_submissions SET deleted = 1, resolved = 0 WHERE id = ?";
 $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $id);
 
