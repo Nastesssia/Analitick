@@ -30,36 +30,26 @@
           <tr>
             <th>ID</th>
             <th>Дата создания</th>
-            <th>Фамилия</th>
-            <th>Имя</th>
-            <th>Отчество</th>
-            <th>Телефон</th>
-            <th>Email</th>
-            <th>Проблема</th>
-            <th>Ссылки на файлы</th>
+            <th>Информация о заявке</th>
+
             <th>Действия</th>
             <th>Действия</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="submission in submissions" :key="submission.id">
+
+
             <td>{{ submission.id }}</td>
             <td>{{ new Date(submission.created_at).toLocaleString() }}</td>
 
-            <td>{{ submission.surname }}</td>
-            <td>{{ submission.name }}</td>
-            <td>{{ submission.patronymic }}</td>
-            <td>{{ submission.phone }}</td>
-            <td>{{ submission.email }}</td>
             <td>
-              <span>
-                {{ submission.problem.length > 50 ? submission.problem.substring(0, 50) + '...' : submission.problem }}
-              </span>
-              <button class="expand-button" @click="showFullProblem(submission.problem)">Развернуть</button>
-            </td>
-            <!-- Добавляем отображение ссылок на файлы -->
-            <td>
-              <ul>
+              <strong>{{ submission.surname }} {{ submission.name }} {{ submission.patronymic }}</strong><br>
+              📞 {{ submission.phone }}<br>
+              ✉️ <a :href="'mailto:' + submission.email">{{ submission.email }}</a><br>
+              📝 {{ submission.problem.length > 50 ? submission.problem.substring(0, 50) + '...' : submission.problem }}
+              <button class="expand-button" @click="showFullProblem(submission.problem)">Подробнее</button><br>
+              📂 <ul>
                 <li v-for="(file, index) in parseLinks(submission.file_links)" :key="index">
                   <a :href="file.url" target="_blank">{{ file.name }}</a>
                 </li>
@@ -80,13 +70,34 @@
         </tbody>
       </table>
       <p v-else>Заявок пока нет.</p>
+      <div class="pagination">
+        <!-- Кнопка "Первая страница" -->
+        <button @click="changePage(activeTab, 1)" :disabled="currentPage[activeTab] === 1">«</button>
+
+        <!-- Кнопка "Назад" -->
+        <button @click="changePage(activeTab, currentPage[activeTab] - 1)"
+          :disabled="currentPage[activeTab] === 1">‹</button>
+
+        <!-- Перебор страниц с учетом скрытых -->
+        <template v-for="page in visiblePages">
+          <button v-if="page === '...'" class="dots" disabled>...</button>
+          <button v-else :class="{ active: page === currentPage[activeTab] }" @click="changePage(activeTab, page)">
+            {{ page }}
+          </button>
+        </template>
+
+        <!-- Кнопка "Вперед" -->
+        <button @click="changePage(activeTab, currentPage[activeTab] + 1)"
+          :disabled="currentPage[activeTab] === totalPages[activeTab]">›</button>
+
+        <!-- Кнопка "Последняя страница" -->
+        <button @click="changePage(activeTab, totalPages[activeTab])"
+          :disabled="currentPage[activeTab] === totalPages[activeTab]">»</button>
+      </div>
+
     </div>
-    <div class="pagination">
-      <button v-for="page in totalPages" :key="page" :class="{ active: page === currentPage }"
-        @click="changePage(page)">
-        {{ page }}
-      </button>
-    </div>
+
+
 
     <!-- Таблица для удаленных заявок -->
     <div v-if="activeTab === 'deleted'">
@@ -96,36 +107,25 @@
           <tr>
             <th>ID</th>
             <th>Дата создания</th>
-            <th>Фамилия</th>
-            <th>Имя</th>
-            <th>Отчество</th>
-            <th>Телефон</th>
-            <th>Email</th>
-            <th>Проблема</th>
-            <th>Ссылки на файлы</th>
+            <th>Информация о заявке</th>
+
             <th>Действия</th>
 
           </tr>
         </thead>
         <tbody>
-          <tr v-for="submission in deletedSubmissions" :key="submission.id">
+          <tr v-for="submission in paginatedDeletedSubmissions" :key="submission.id">
+
             <td>{{ submission.id }}</td>
             <td>{{ new Date(submission.created_at).toLocaleString() }}</td>
 
-            <td>{{ submission.surname }}</td>
-            <td>{{ submission.name }}</td>
-            <td>{{ submission.patronymic }}</td>
-            <td>{{ submission.phone }}</td>
-            <td>{{ submission.email }}</td>
             <td>
-              <span>
-                {{ submission.problem.length > 50 ? submission.problem.substring(0, 50) + '...' : submission.problem }}
-              </span>
-              <button class="expand-button" @click="showFullProblem(submission.problem)">Развернуть</button>
-            </td>
-            <!-- Добавляем отображение ссылок на файлы -->
-            <td>
-              <ul>
+              <strong>{{ submission.surname }} {{ submission.name }} {{ submission.patronymic }}</strong><br>
+              📞 {{ submission.phone }}<br>
+              ✉️ <a :href="'mailto:' + submission.email">{{ submission.email }}</a><br>
+              📝 {{ submission.problem.length > 50 ? submission.problem.substring(0, 50) + '...' : submission.problem }}
+              <button class="expand-button" @click="showFullProblem(submission.problem)">Подробнее</button><br>
+              📂 <ul>
                 <li v-for="(file, index) in parseLinks(submission.file_links)" :key="index">
                   <a :href="file.url" target="_blank">{{ file.name }}</a>
                 </li>
@@ -140,6 +140,30 @@
         </tbody>
       </table>
       <p v-else>Нет удаленных заявок.</p>
+      <div class="pagination">
+        <!-- Кнопка "Первая страница" -->
+        <button @click="changePage(activeTab, 1)" :disabled="currentPage[activeTab] === 1">«</button>
+
+        <!-- Кнопка "Назад" -->
+        <button @click="changePage(activeTab, currentPage[activeTab] - 1)"
+          :disabled="currentPage[activeTab] === 1">‹</button>
+
+        <!-- Перебор страниц с учетом скрытых -->
+        <template v-for="page in visiblePages">
+          <button v-if="page === '...'" class="dots" disabled>...</button>
+          <button v-else :class="{ active: page === currentPage[activeTab] }" @click="changePage(activeTab, page)">
+            {{ page }}
+          </button>
+        </template>
+
+        <!-- Кнопка "Вперед" -->
+        <button @click="changePage(activeTab, currentPage[activeTab] + 1)"
+          :disabled="currentPage[activeTab] === totalPages[activeTab]">›</button>
+
+        <!-- Кнопка "Последняя страница" -->
+        <button @click="changePage(activeTab, totalPages[activeTab])"
+          :disabled="currentPage[activeTab] === totalPages[activeTab]">»</button>
+      </div>
     </div>
     <!-- ---------------------------------- -->
     <div v-if="activeTab === 'assistant'">
@@ -150,41 +174,31 @@
             <th>ID</th>
             <th>Дата создания Заявки</th>
             <th>Дата отправки помощнику</th>
-            <th>Фамилия</th>
-            <th>Имя</th>
-            <th>Отчество</th>
-            <th>Телефон</th>
-            <th>Email</th>
-            <th>Проблема</th>
-            <th>Ссылки на файлы</th>
+            <th>Информация о заявке</th>
+
             <th>Действия</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="submission in assistantSubmissions" :key="submission.id">
+          <tr v-for="submission in paginatedAssistantSubmissions" :key="submission.id">
+
             <td>{{ submission.id }}</td>
             <td>{{ new Date(submission.created_at).toLocaleString() }}</td>
             <td>{{ submission.assistant_sent_at ? new Date(submission.assistant_sent_at).toLocaleString() : 'Не указано'
             }}</td>
-            <td>{{ submission.surname }}</td>
-            <td>{{ submission.name }}</td>
-            <td>{{ submission.patronymic }}</td>
-            <td>{{ submission.phone }}</td>
-            <td>{{ submission.email }}</td>
             <td>
-              <span>
-                {{ submission.problem.length > 50 ? submission.problem.substring(0, 50) + '...' : submission.problem }}
-              </span>
-              <button class="expand-button" @click="showFullProblem(submission.problem)">Развернуть</button>
-            </td>
-            <!-- Добавляем отображение ссылок на файлы -->
-            <td>
-              <ul>
+              <strong>{{ submission.surname }} {{ submission.name }} {{ submission.patronymic }}</strong><br>
+              📞 {{ submission.phone }}<br>
+              ✉️ <a :href="'mailto:' + submission.email">{{ submission.email }}</a><br>
+              📝 {{ submission.problem.length > 50 ? submission.problem.substring(0, 50) + '...' : submission.problem }}
+              <button class="expand-button" @click="showFullProblem(submission.problem)">Подробнее</button><br>
+              📂 <ul>
                 <li v-for="(file, index) in parseLinks(submission.file_links)" :key="index">
                   <a :href="file.url" target="_blank">{{ file.name }}</a>
                 </li>
               </ul>
             </td>
+
             <td>
               <button class="return-button" @click="returnSubmission(submission.id)">Вернуть заявку себе</button>
             </td>
@@ -192,6 +206,30 @@
         </tbody>
       </table>
       <p v-else>Нет заявок, отправленных помощнику.</p>
+      <div class="pagination">
+        <!-- Кнопка "Первая страница" -->
+        <button @click="changePage(activeTab, 1)" :disabled="currentPage[activeTab] === 1">«</button>
+
+        <!-- Кнопка "Назад" -->
+        <button @click="changePage(activeTab, currentPage[activeTab] - 1)"
+          :disabled="currentPage[activeTab] === 1">‹</button>
+
+        <!-- Перебор страниц с учетом скрытых -->
+        <template v-for="page in visiblePages">
+          <button v-if="page === '...'" class="dots" disabled>...</button>
+          <button v-else :class="{ active: page === currentPage[activeTab] }" @click="changePage(activeTab, page)">
+            {{ page }}
+          </button>
+        </template>
+
+        <!-- Кнопка "Вперед" -->
+        <button @click="changePage(activeTab, currentPage[activeTab] + 1)"
+          :disabled="currentPage[activeTab] === totalPages[activeTab]">›</button>
+
+        <!-- Кнопка "Последняя страница" -->
+        <button @click="changePage(activeTab, totalPages[activeTab])"
+          :disabled="currentPage[activeTab] === totalPages[activeTab]">»</button>
+      </div>
     </div>
     <!-- ---------------------------------- -->
 
@@ -206,65 +244,80 @@
             <th>Дата отправки помощнику</th>
             <th>Дата решения помощником</th>
             <th>Время на решение (минут)</th>
-            <th>Фамилия</th>
-            <th>Имя</th>
-            <th>Отчество</th>
-            <th>Телефон</th>
-            <th>Email</th>
-            <th>Проблема</th>
-            <th>Ссылки на файлы</th>
+            <th>Информация о заявке</th>
+
             <th>Действия</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="submission in resolvedSubmissions" :key="submission.id">
+          <tr v-for="submission in paginatedResolvedSubmissions" :key="submission.id">
+
             <td>{{ submission.id }}</td>
             <td>{{ new Date(submission.created_at).toLocaleString() }}</td>
             <td>{{ submission.assistant_sent_at ? new Date(submission.assistant_sent_at).toLocaleString() : 'Не указано'
-              }}</td>
-            <td>{{ submission.assistant_resolved_at ? new Date(submission.assistant_resolved_at).toLocaleString() : 'Не   указано' }}</td>
-           
+            }}</td>
+            <td>{{ submission.assistant_resolved_at ? new Date(submission.assistant_resolved_at).toLocaleString() : 'Не  указано' }}</td>
+            
+
             <td>{{ submission.resolution_time_minutes !== '—' ? submission.resolution_time_minutes : '—' }}</td>
 
 
-            <td>{{ submission.surname }}</td>
-            <td>{{ submission.name }}</td>
-            <td>{{ submission.patronymic }}</td>
-            <td>{{ submission.phone }}</td>
-            <td>{{ submission.email }}</td>
             <td>
-              <span>
-                {{ submission.problem.length > 50 ? submission.problem.substring(0, 50) + '...' : submission.problem }}
-              </span>
-              <button class="view-button" @click="showFullProblem(submission.problem)">Просмотр</button>
-            </td>
-
-            <td>
-              <ul>
+              <strong>{{ submission.surname }} {{ submission.name }} {{ submission.patronymic }}</strong><br>
+              📞 {{ submission.phone }}<br>
+              ✉️ <a :href="'mailto:' + submission.email">{{ submission.email }}</a><br>
+              📝 {{ submission.problem.length > 50 ? submission.problem.substring(0, 50) + '...' : submission.problem }}
+              <button class="expand-button" @click="showFullProblem(submission.problem)">Подробнее</button><br>
+              📂 <ul>
                 <li v-for="(file, index) in parseLinks(submission.file_links)" :key="index">
                   <a :href="file.url" target="_blank">{{ file.name }}</a>
                 </li>
               </ul>
             </td>
             <td>
-    <button class="delete-button" @click="deleteSubmission(submission.id)">Удалить</button>
-</td>
+              <button class="delete-button" @click="deleteSubmission(submission.id)">Удалить</button>
+            </td>
 
           </tr>
         </tbody>
       </table>
       <p v-else>Нет решенных заявок.</p>
-    </div>
+      <div class="pagination">
+        <!-- Кнопка "Первая страница" -->
+        <button @click="changePage(activeTab, 1)" :disabled="currentPage[activeTab] === 1">«</button>
 
+        <!-- Кнопка "Назад" -->
+        <button @click="changePage(activeTab, currentPage[activeTab] - 1)"
+          :disabled="currentPage[activeTab] === 1">‹</button>
+
+        <!-- Перебор страниц с учетом скрытых -->
+        <template v-for="page in visiblePages">
+          <button v-if="page === '...'" class="dots" disabled>...</button>
+          <button v-else :class="{ active: page === currentPage[activeTab] }" @click="changePage(activeTab, page)">
+            {{ page }}
+          </button>
+        </template>
+
+        <!-- Кнопка "Вперед" -->
+        <button @click="changePage(activeTab, currentPage[activeTab] + 1)"
+          :disabled="currentPage[activeTab] === totalPages[activeTab]">›</button>
+
+        <!-- Кнопка "Последняя страница" -->
+        <button @click="changePage(activeTab, totalPages[activeTab])"
+          :disabled="currentPage[activeTab] === totalPages[activeTab]">»</button>
+      </div>
+    </div>
 
 
     <div v-if="showModal" class="modal-overlay">
       <div class="modal-content">
         <h2>Полное описание проблемы</h2>
-        <p>{{ fullProblemText }}</p>
+        <div class="problem-text" v-html="fullProblemText"></div>
         <button class="close-button" @click="closeModal">Закрыть</button>
       </div>
     </div>
+
+
   </div>
 
 </template>
@@ -281,31 +334,109 @@ export default {
       resolvedSubmissions: [],
       showModal: false,
       fullProblemText: '',
-      currentPage: 1,
-      itemsPerPage: 25,
-      totalCount: 0
+
+      // Пагинация для разных вкладок
+      currentPage: {
+        active: 1,
+        deleted: 1,
+        assistant: 1,
+        resolved: 1
+      },
+      itemsPerPage: 5, // Количество заявок на странице
+      totalCount: {
+        active: 0,
+        deleted: 0,
+        assistant: 0,
+        resolved: 0
+      }
     };
   },
   computed: {
+
     paginatedSubmissions() {
-      const start = (this.currentPage - 1) * this.itemsPerPage;
-      return this.submissions.slice(start, start + this.itemsPerPage);
+      return this.submissions.slice(
+        (this.currentPage.active - 1) * this.itemsPerPage,
+        this.currentPage.active * this.itemsPerPage
+      );
     },
     paginatedDeletedSubmissions() {
-      const start = (this.currentPage - 1) * this.itemsPerPage;
-      return this.deletedSubmissions.slice(start, start + this.itemsPerPage);
+      return this.deletedSubmissions.slice(
+        (this.currentPage.deleted - 1) * this.itemsPerPage,
+        this.currentPage.deleted * this.itemsPerPage
+      );
     },
+    paginatedAssistantSubmissions() {
+      return this.assistantSubmissions.slice(
+        (this.currentPage.assistant - 1) * this.itemsPerPage,
+        this.currentPage.assistant * this.itemsPerPage
+      );
+    },
+    paginatedResolvedSubmissions() {
+      return this.resolvedSubmissions.slice(
+        (this.currentPage.resolved - 1) * this.itemsPerPage,
+        this.currentPage.resolved * this.itemsPerPage
+      );
+    },
+
+    visiblePages() {
+      const total = this.totalPages[this.activeTab];
+      const current = this.currentPage[this.activeTab];
+      if (total <= 4) {
+        // Если страниц мало (7 или меньше), просто показываем все
+        return Array.from({ length: total }, (_, i) => i + 1);
+      }
+
+      const pages = [];
+      pages.push(1); // Первая страница
+
+      if (current > 3) {
+        pages.push('...');
+      }
+
+      // Добавляем 2 страницы перед текущей и 2 после (если они есть)
+      for (let i = Math.max(2, current - 2); i <= Math.min(total - 1, current + 2); i++) {
+        pages.push(i);
+      }
+
+      if (current < total - 2) {
+        pages.push('...');
+      }
+
+      pages.push(total); // Последняя страница
+
+      return pages;
+    },
+
+
     totalPages() {
-      return Math.ceil(this.totalCount / this.itemsPerPage);
-    }
+      return {
+        active: this.totalCount.active ? Math.ceil(this.totalCount.active / this.itemsPerPage) : 1,
+        deleted: this.totalCount.deleted ? Math.ceil(this.totalCount.deleted / this.itemsPerPage) : 1,
+        assistant: this.totalCount.assistant ? Math.ceil(this.totalCount.assistant / this.itemsPerPage) : 1,
+        resolved: this.totalCount.resolved ? Math.ceil(this.totalCount.resolved / this.itemsPerPage) : 1,
+      };
+    },
   },
   created() {
     this.fetchSubmissions();
   },
   methods: {
+    formatProblemText(text) {
+      if (!text) return "";
+
+      // Регулярное выражение для поиска ссылок
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+      // Преобразуем текст в HTML с кликабельными ссылками
+      return text.replace(urlRegex, (url) => {
+        return `<a href="${url}" target="_blank" class="problem-link">${url}</a>`;
+      }).replace(/\n/g, "<br>"); // Добавляем переносы строк
+    }
+    ,
     async fetchSubmissions() {
       try {
-        const response = await fetch(`/get_submissions.php?page=${this.currentPage}&itemsPerPage=${this.itemsPerPage}`, { credentials: 'include' });
+        const currentPage = this.currentPage[this.activeTab]; // Берем текущую страницу активной вкладки
+        const response = await fetch(`/get_submissions.php?page=${currentPage}&itemsPerPage=${this.itemsPerPage}`, { credentials: 'include' });
 
         if (!response.ok) {
           console.error('Ошибка ответа сервера:', response.status, response.statusText);
@@ -315,37 +446,18 @@ export default {
         const data = await response.json();
 
         if (data.success) {
-          // Активные заявки
-          this.submissions = Array.isArray(data.submissions) ? data.submissions.sort((a, b) => b.id - a.id) : [];
-
-          // Отправленные помощнику
-          this.assistantSubmissions = Array.isArray(data.assistantSubmissions) ? data.assistantSubmissions.sort((a, b) => b.id - a.id) : [];
-
-          // Удаленные заявки
-          this.deletedSubmissions = Array.isArray(data.deletedSubmissions) ? data.deletedSubmissions.sort((a, b) => b.id - a.id) : [];
-
-          // Решенные заявки с корректным расчетом времени выполнения в минутах
-          if (Array.isArray(data.resolvedSubmissions)) {
-            this.resolvedSubmissions = data.resolvedSubmissions.map(submission => {
-              const sentAt = submission.assistant_sent_at ? new Date(submission.assistant_sent_at.replace(' ', 'T')) : null;
-              const resolvedAt = submission.assistant_resolved_at ? new Date(submission.assistant_resolved_at.replace(' ', 'T')) : null;
-
-              let resolutionTimeMinutes = '—';
-              if (sentAt && resolvedAt && !isNaN(sentAt) && !isNaN(resolvedAt)) {
-                const diffMs = resolvedAt - sentAt;
-                resolutionTimeMinutes = Math.floor(diffMs / 60000); // Разница в минутах
-              }
-
-              return {
-                ...submission,
-                assistant_resolved_at: submission.assistant_resolved_at || 'Не указано',
-                resolution_time_minutes: resolutionTimeMinutes !== '—' ? resolutionTimeMinutes : '—'
-              };
-            }).sort((a, b) => b.id - a.id);
-          } else {
-            this.resolvedSubmissions = [];
+          // Загружаем заявки только для активной вкладки
+          if (this.activeTab === "active") {
+            this.submissions = data.submissions || [];
+          } else if (this.activeTab === "deleted") {
+            this.deletedSubmissions = data.deletedSubmissions || [];
+          } else if (this.activeTab === "assistant") {
+            this.assistantSubmissions = data.assistantSubmissions || [];
+          } else if (this.activeTab === "resolved") {
+            this.resolvedSubmissions = data.resolvedSubmissions || [];
           }
 
+          // Обновляем общее количество записей
           this.totalCount = data.totalCount;
         } else {
           console.error('Ошибка загрузки данных:', data.message);
@@ -354,6 +466,8 @@ export default {
         console.error('Ошибка загрузки заявок:', error);
       }
     }
+
+
 
 
 
@@ -410,11 +524,9 @@ export default {
 
     switchTab(tab) {
       this.activeTab = tab;
-      this.currentPage = 1;
-      this.fetchSubmissions(); // Теперь всегда один метод загрузки заявок
-    }
-
-    ,
+      this.currentPage[tab] = 1; // Сброс на первую страницу
+      this.fetchSubmissions();
+    },
     parseLinks(fileLinks) {
       try {
         console.log('file_links перед парсингом:', fileLinks);
@@ -469,14 +581,10 @@ export default {
         return [];
       }
     }
-
-
-
-
     ,
     async fetchSubmissions() {
       try {
-        const response = await fetch(`/get_submissions.php?page=${this.currentPage}&itemsPerPage=${this.itemsPerPage}`, { credentials: 'include' });
+        const response = await fetch(`/get_submissions.php?page=${this.currentPage[this.activeTab]}&itemsPerPage=${this.itemsPerPage}`, { credentials: 'include' });
 
         if (!response.ok) {
           console.error('Ошибка ответа сервера:', response.status, response.statusText);
@@ -494,37 +602,36 @@ export default {
 
           // Удаленные заявки
           this.deletedSubmissions = Array.isArray(data.deletedSubmissions) ? data.deletedSubmissions.sort((a, b) => b.id - a.id) : [];
-          // Решенные заявки с более точным расчетом времени выполнения
+
+          // Решенные заявки с расчетом времени решения
           if (Array.isArray(data.resolvedSubmissions)) {
             this.resolvedSubmissions = data.resolvedSubmissions.map(submission => {
-              const sentAt = submission.assistant_sent_at ? new Date(submission.assistant_sent_at) : null;
-              const resolvedAt = submission.assistant_resolved_at ? new Date(submission.assistant_resolved_at) : null;
+              const sentAt = submission.assistant_sent_at ? new Date(submission.assistant_sent_at.replace(' ', 'T')) : null;
+              const resolvedAt = submission.assistant_resolved_at ? new Date(submission.assistant_resolved_at.replace(' ', 'T')) : null;
 
-              if (sentAt && resolvedAt) {
-                const durationMs = resolvedAt - sentAt; // Разница в миллисекундах
-                const durationMinutes = Math.floor(durationMs / (1000 * 60)); // Полные минуты
-                const durationSeconds = Math.floor((durationMs % (1000 * 60)) / 1000); // Оставшиеся секунды
-
-                const formattedDuration = `${durationMinutes} мин ${durationSeconds} сек`;
-
-                return {
-                  ...submission,
-                  resolution_time_minutes: durationMinutes > 0 || durationSeconds > 0 ? formattedDuration : 'Менее 1 сек'
-                };
-              } else {
-                return {
-                  ...submission,
-                  resolution_time_minutes: 'Не указано'
-                };
+              let resolutionTime = '—';
+              if (sentAt && resolvedAt && !isNaN(sentAt) && !isNaN(resolvedAt)) {
+                const diffMs = resolvedAt - sentAt;
+                const minutes = Math.floor(diffMs / 60000);
+                const seconds = Math.floor((diffMs % 60000) / 1000);
+                resolutionTime = `${minutes} мин ${seconds} сек`;
               }
+
+              return {
+                ...submission,
+                assistant_resolved_at: submission.assistant_resolved_at || 'Не указано',
+                resolution_time_minutes: resolutionTime !== '—' ? resolutionTime : '—'
+              };
             }).sort((a, b) => b.id - a.id);
           } else {
             this.resolvedSubmissions = [];
           }
 
-
-
-          this.totalCount = data.totalCount;
+          // Обновление totalCount
+          this.totalCount.active = data.totalCount.active || 0;
+          this.totalCount.deleted = data.totalCount.deleted || 0;
+          this.totalCount.assistant = data.totalCount.assistant || 0;
+          this.totalCount.resolved = data.totalCount.resolved || 0;
         } else {
           console.error('Ошибка загрузки данных:', data.message);
         }
@@ -564,19 +671,21 @@ export default {
       }
     },
     showFullProblem(problemText) {
-      this.fullProblemText = problemText;
+      this.fullProblemText = this.formatProblemText(problemText);
       this.showModal = true;
-    },
+    }
+    ,
     closeModal() {
       this.showModal = false;
-      this.fullProblemText = '';
+      this.fullProblemText = "";
     },
-    changePage(page) {
-      if (page > 0 && page <= this.totalPages) {
-        this.currentPage = page;
+    changePage(tab, page) {
+      if (page > 0 && page <= this.totalPages[tab]) {
+        this.currentPage[tab] = page;
         this.fetchSubmissions();
       }
-    },
+    }
+    ,
     async logout() {
       try {
         // Отправка запроса на сервер для завершения сессии
@@ -604,12 +713,89 @@ export default {
 
 
 <style scoped>
+td {
+  vertical-align: top;
+  padding: 10px;
+  font-size: 14px;
+}
+
+td ul {
+  padding-left: 0;
+  list-style: none;
+}
+
+td ul li a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+td ul li a:hover {
+  text-decoration: underline;
+}
+
+.problem-text {
+  max-height: 300px;
+  /* Ограничение по высоте */
+  overflow-y: auto;
+  /* Скролл, если текст длинный */
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 5px;
+  text-align: left;
+  white-space: pre-line;
+  /* Сохраняем переносы строк */
+}
+
+.problem-text a,
+.problem-link {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: bold;
+  word-break: break-word;
+  /* Чтобы длинные ссылки не ломали таблицу */
+}
+
+.problem-text a:hover,
+.problem-link:hover {
+  text-decoration: underline;
+}
+
+
+.problem-link {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: bold;
+  word-break: break-word;
+  /* Чтобы длинные ссылки не ломали таблицу */
+}
+
+.problem-link:hover {
+  text-decoration: underline;
+}
+
+.share-button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 5px;
+  background-color: #085B5B;
+  /* Синий цвет */
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.share-button:hover {
+  background-color: #0b7777;
+  /* Темнее при наведении */
+}
 
 
 
 
 .return-button {
-  background-color: #ffa500;
+  background-color: #CB7F41;
   color: white;
   border: none;
   padding: 5px 10px;
@@ -618,7 +804,7 @@ export default {
 }
 
 .return-button:hover {
-  background-color: #ff8c00;
+  background-color: rgb(179, 108, 23);
 }
 
 h1 {
@@ -649,28 +835,36 @@ p {
 .pagination {
   display: flex;
   justify-content: center;
+  gap: 5px;
   margin-top: 20px;
 }
 
 .pagination button {
-  padding: 8px 12px;
-  margin: 0 5px;
-  border: none;
-  border-radius: 5px;
-  background-color: #e0e0e0;
-  color: #333;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  background: white;
   cursor: pointer;
-  transition: 0.3s;
+  font-size: 14px;
+
 }
 
 .pagination button.active {
-  background-color: #970e0e;
+  background: #970e0e;
   color: white;
+  font-weight: bold;
 }
 
 .pagination button:hover {
-  background-color: #b91010;
+  background: #b91010;
   color: white;
+}
+
+.pagination button.dots {
+  background: none;
+  border: none;
+  cursor: default;
+  font-weight: bold;
+  width: 40px;
 }
 
 /* Стили для модального окна */
@@ -712,13 +906,13 @@ p {
   margin-left: 10px;
   border: none;
   border-radius: 5px;
-  background-color: #5bc0de;
+  background-color: #790B49;
   color: white;
   cursor: pointer;
 }
 
 .expand-button:hover {
-  background-color: #31b0d5;
+  background-color: #990f5d;
 }
 
 .dashboard {
@@ -801,13 +995,18 @@ p {
   color: white;
   cursor: pointer;
 }
+
 .delete-button:hover {
-    background-color: #c9302c;
+  background-color: #c9302c;
 }
 
 
 
 .restore-button {
-  background-color: #5cb85c;
+  background-color: #0B790B;
+}
+
+.restore-button:hover {
+  background-color: #0d960d;
 }
 </style>

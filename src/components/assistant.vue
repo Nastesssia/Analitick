@@ -1,17 +1,18 @@
 <template>
   <div class="container">
     <h1>Кабинет помощника</h1>
-    <p>Отправляйте ответы на заявки и просматривайте документы.</p>
+    <p>Добро пожаловать в кабинет помощника. Здесь вы можете отвечать на заявки</p>
   </div>
+  
   <div class="navbar">
-      <div class="tabs-container">
-      </div>
-      <button class="logout-button" @click="logout">Выйти</button>
-    </div>
+  <div class="navbar-left">
+    <h2>Все заявки</h2>
+  </div>
+  <button class="logout-button" @click="logout">Выйти</button>
+</div>
 
   <div class="dashboard">
     <div v-if="activeTab === 'active'">
-      <h2>Все заявки</h2>
       <table class="submissions-table" v-if="paginatedSubmissions.length > 0">
         <thead>
           <tr>
@@ -91,14 +92,15 @@
       </div>
     </div>
 
-    <!-- Модальное окно для отображения полной проблемы -->
-    <div v-if="showModal" class="modal-overlay">
-      <div class="modal-content">
-        <h2>Полный текст проблемы</h2>
-        <p>{{ fullProblemText }}</p>
-        <button class="close-button" @click="closeModal">Закрыть</button>
-      </div>
-    </div>
+  <!-- Модальное окно для отображения полной проблемы -->
+<div v-if="showModal" class="modal-overlay">
+  <div class="modal-content">
+    <h2>Полный текст проблемы</h2>
+    <div class="problem-text" v-html="fullProblemText"></div>
+    <button class="close-button" @click="closeModal">Закрыть</button>
+  </div>
+</div>
+
 
   </div>
 </template>
@@ -115,7 +117,7 @@ export default {
       answerText: '',
       attachedFiles: [],
       currentPage: 1,
-      itemsPerPage: 25,
+      itemsPerPage: 5,
       totalCount: 0,
       showModal: false,
       fullProblemText: '',
@@ -135,6 +137,17 @@ export default {
     }
   },
   methods: {
+    formatProblemText(text) {
+    if (!text) return "";
+
+    // Регулярное выражение для поиска ссылок
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+    // Заменяем ссылки на <a> + добавляем переносы строк
+    return text.replace(urlRegex, (url) => {
+      return `<a href="${url}" target="_blank" class="problem-link">${url}</a>`;
+    }).replace(/\n/g, "<br>");
+  },
     async logout() {
       try {
         const response = await fetch('/logout.php', { method: 'POST', credentials: 'include' });
@@ -233,11 +246,10 @@ export default {
     },
 
     showFullProblem(problemText) {
-      this.fullProblemText = problemText;
-      this.showModal = true;
-    },
-
-    closeModal() {
+    this.fullProblemText = this.formatProblemText(problemText);
+    this.showModal = true;
+  },
+  closeModal() {
       this.showModal = false;
       this.showAnswerModal = false;
       this.fullProblemText = '';
@@ -339,29 +351,41 @@ export default {
 
 
 <style scoped>
-/* Основные стили */
-body, p, h1, h2, label, button, input, textarea {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: Arial, sans-serif;
+.problem-text {
+  max-height: 300px; /* Ограничение по высоте */
+  overflow-y: auto; /* Скролл, если текст длинный */
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 5px;
+  text-align: left;
+  white-space: pre-line; /* Сохраняем переносы строк */
 }
 
-body {
-    background-color: #f2f2f2;
-    color: #3f3f3f;
-    padding: 20px;
+.problem-text a,
+.problem-link {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: bold;
+  word-break: break-word; /* Чтобы длинные ссылки не ломали таблицу */
 }
+
+.problem-text a:hover,
+.problem-link:hover {
+  text-decoration: underline;
+}
+
+
+
+
 
 /* Контейнер */
 .container {
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    background-color: white;
-    max-width: 800px;
-    margin: 0 auto;
-    text-align: center;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  background-color: white;
+  max-width: 600px;
+  text-align: center;
 }
 
 h1 {
@@ -412,13 +436,23 @@ input[type="file"] {
 }
 
 textarea {
-    height: 120px;
-    resize: vertical;
+    height: 120px; /* Стандартная высота */
+    max-height: 300px; /* Максимальная высота */
+    overflow-y: auto; /* Вертикальный скролл при необходимости */
+    resize: vertical; /* Разрешить изменение высоты */
+    width: 100%; /* Растягивание по ширине */
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    font-size: 1rem;
+    color: #3f3f3f;
 }
+
 
 /* Кнопки */
 button {
-    padding: 10px 20px;
+    padding: 10px 15px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -454,12 +488,17 @@ button {
 }
 
 .expand-button {
-    background-color: #5bc0de;
-    margin-left: 10px;
+  padding: 5px 10px;
+  margin-left: 10px;
+  border: none;
+  border-radius: 5px;
+  background-color: #790B49;
+  color: white;
+  cursor: pointer;
 }
 
 .expand-button:hover {
-    background-color: #31b0d5;
+  background-color: #990f5d;
 }
 
 /* Модальное окно */
@@ -491,7 +530,23 @@ button {
     justify-content: flex-end;
     gap: 10px;
 }
+.dashboard {
+  padding: 20px;
+}
+.navbar {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between; /* Распределяет элементы: один влево, другой вправо */
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+}
 
+.navbar-left {
+  display: flex;
+  align-items: center;
+}
 /* Таблица */
 .submissions-table {
     width: 100%;

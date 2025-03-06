@@ -14,18 +14,18 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'lawyer') {
 
 // Получение текущей страницы и количества записей на страницу
 $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
-$itemsPerPage = isset($_GET['itemsPerPage']) ? intval($_GET['itemsPerPage']) : 25;
-$offset = ($page - 1) * $itemsPerPage;
+$itemsPerPage = isset($_GET['itemsPerPage']) ? intval($_GET['itemsPerPage']) : 5;
+$offset = ($page - 1) * $itemsPerPage; // Теперь правильно считаем сдвиг
 
-// Получение активных заявок (не отправленных помощнику и не удаленных)
 $sql = "SELECT id, surname, name, patronymic, phone, email, problem, file_links, deleted, created_at, visible_to_assistant 
         FROM form_submissions 
         WHERE visible_to_assistant = 0 AND deleted = 0
         ORDER BY id DESC 
         LIMIT ?, ?";
+
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("ii", $offset, $itemsPerPage);
-$stmt->execute();
+$stmt->execute();   
 $result = $stmt->get_result();
 
 $submissions = [];
@@ -65,6 +65,18 @@ while ($row = $resultDeleted->fetch_assoc()) {
 // Подсчет общего количества активных заявок
 $countResult = $conn->query("SELECT COUNT(*) as total FROM form_submissions WHERE visible_to_assistant = 0 AND deleted = 0");
 $totalCount = $countResult->fetch_assoc()['total'];
+// Подсчет общего количества заявок, отправленных помощнику
+$countResultAssistant = $conn->query("SELECT COUNT(*) as total FROM form_submissions WHERE visible_to_assistant = 1 AND deleted = 0");
+$totalCountAssistant = $countResultAssistant->fetch_assoc()['total'];
+
+// Подсчет общего количества удаленных заявок
+$countResultDeleted = $conn->query("SELECT COUNT(*) as total FROM form_submissions WHERE deleted = 1");
+$totalCountDeleted = $countResultDeleted->fetch_assoc()['total'];
+
+// Подсчет общего количества решенных заявок
+$countResultResolved = $conn->query("SELECT COUNT(*) as total FROM form_submissions WHERE resolved = 1 AND deleted = 0");
+$totalCountResolved = $countResultResolved->fetch_assoc()['total'];
+
 // Решенные заявки (resolved = 1)
 $sqlResolved = "SELECT id, surname, name, patronymic, phone, email, problem, file_links, deleted, created_at, assistant_sent_at, assistant_resolved_at, resolved
                 FROM form_submissions 
@@ -83,12 +95,19 @@ while ($row = $resultResolved->fetch_assoc()) {
 error_log("📄 Решенные заявки: " . json_encode($resolvedSubmissions, JSON_UNESCAPED_UNICODE));
 
 echo json_encode([
+    
     "success" => true,
     "submissions" => $submissions,
     "assistantSubmissions" => $assistantSubmissions,
     "deletedSubmissions" => $deletedSubmissions,
     "resolvedSubmissions" => $resolvedSubmissions,
-    "totalCount" => $totalCount
+"totalCount" => [
+    "active" => $totalCount,
+    "assistant" => $totalCountAssistant,
+    "deleted" => $totalCountDeleted,
+    "resolved" => $totalCountResolved
+],
+
 ]);
 
 $stmt->close();
