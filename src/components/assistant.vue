@@ -3,13 +3,13 @@
     <h1>Кабинет помощника</h1>
     <p>Добро пожаловать в кабинет помощника. Здесь вы можете отвечать на заявки</p>
   </div>
-  
+
   <div class="navbar">
-  <div class="navbar-left">
-    <h2>Все заявки</h2>
+    <div class="navbar-left">
+      <h2>Все заявки</h2>
+    </div>
+    <button class="logout-button" @click="logout">Выйти</button>
   </div>
-  <button class="logout-button" @click="logout">Выйти</button>
-</div>
 
   <div class="dashboard">
     <div v-if="activeTab === 'active'">
@@ -17,6 +17,9 @@
         <thead>
           <tr>
             <th>Дата отправки помощнику</th>
+            <th>Дата запроса на доработку</th> <!-- Новая колонка -->
+            <th>Комментарий на доработку</th> <!-- Новая колонка -->
+            <th>Файлы для доработки</th> <!-- Новая колонка -->
             <th>Проблема</th>
             <th>Ссылки на файлы</th>
             <th>Действия</th>
@@ -25,19 +28,46 @@
         <tbody>
           <tr v-for="submission in paginatedSubmissions" :key="submission.id">
             <td>{{ formatDate(submission.assistant_sent_at) }}</td>
+            <td>{{ formatDate(submission.revision_requested_at) }}</td> <!-- Новое поле -->
+
+            <!-- Комментарий на доработку -->
+            <td>
+              <span v-if="submission.revision_comment">
+                {{ submission.revision_comment.length > 50 ? submission.revision_comment.substring(0, 50) + '...' :
+                  submission.revision_comment }}
+                <button v-if="submission.revision_comment.length > 50" class="expand-button"
+                  @click="showFullComment(submission.revision_comment)">Развернуть</button>
+              </span>
+              <span v-else>—</span>
+            </td>
+
+            <!-- Файлы для доработки -->
+            <td>
+              <ul v-if="submission.revision_files && submission.revision_files.length > 0">
+                <li v-for="(file, index) in submission.revision_files" :key="index">
+                  <a :href="file.url" target="_blank">{{ file.name }}</a>
+                </li>
+              </ul>
+              <span v-else>—</span>
+            </td>
+
+            <!-- Проблема -->
             <td>
               <span>
                 {{ submission.problem.length > 50 ? submission.problem.substring(0, 50) + '...' : submission.problem }}
               </span>
               <button class="expand-button" @click="showFullProblem(submission.problem)">Развернуть</button>
             </td>
+
+            <!-- Ссылки на файлы -->
             <td>
-              <ul>
-                <li v-for="(file, index) in parseLinks(submission.file_links)" :key="index">
+              <ul v-if="submission.file_links.length > 0">
+                <li v-for="(file, index) in submission.file_links" :key="index">
                   <a :href="file.url" target="_blank">{{ file.name }}</a>
                 </li>
               </ul>
             </td>
+
             <td>
               <button class="answer-button" @click="openAnswerModal(submission)">
                 Дать ответ
@@ -48,7 +78,14 @@
       </table>
       <p v-else>Заявок пока нет.</p>
     </div>
-
+<!-- Модальное окно для полного комментария -->
+<div v-if="showCommentModal" class="modal-overlay">
+  <div class="modal-content">
+    <h2>Комментарий на доработку</h2>
+    <p>{{ fullCommentText }}</p>
+    <button class="close-button" @click="closeCommentModal">Закрыть</button>
+  </div>
+</div>
     <!-- Модальное окно для ответа на заявку -->
     <div v-if="showAnswerModal" class="modal-overlay">
       <div class="modal-content">
@@ -92,14 +129,14 @@
       </div>
     </div>
 
-  <!-- Модальное окно для отображения полной проблемы -->
-<div v-if="showModal" class="modal-overlay">
-  <div class="modal-content">
-    <h2>Полный текст проблемы</h2>
-    <div class="problem-text" v-html="fullProblemText"></div>
-    <button class="close-button" @click="closeModal">Закрыть</button>
-  </div>
-</div>
+    <!-- Модальное окно для полной проблемы -->
+    <div v-if="showModal" class="modal-overlay">
+      <div class="modal-content">
+        <h2>Полный текст проблемы</h2>
+        <div class="problem-text" v-html="fullProblemText"></div>
+        <button class="close-button" @click="closeModal">Закрыть</button>
+      </div>
+    </div>
 
 
   </div>
@@ -114,6 +151,8 @@ export default {
       showAnswerModal: false,
       selectedSubmission: null,
       answerSubject: '',
+      fullCommentText: '',
+      showCommentModal: false,
       answerText: '',
       attachedFiles: [],
       currentPage: 1,
@@ -137,17 +176,26 @@ export default {
     }
   },
   methods: {
+    showFullComment(commentText) {
+  this.fullCommentText = commentText;
+  this.showCommentModal = true;
+},
+
+closeCommentModal() {
+  this.showCommentModal = false;
+  this.fullCommentText = '';
+},
     formatProblemText(text) {
-    if (!text) return "";
+      if (!text) return "";
 
-    // Регулярное выражение для поиска ссылок
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
+      // Регулярное выражение для поиска ссылок
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
 
-    // Заменяем ссылки на <a> + добавляем переносы строк
-    return text.replace(urlRegex, (url) => {
-      return `<a href="${url}" target="_blank" class="problem-link">${url}</a>`;
-    }).replace(/\n/g, "<br>");
-  },
+      // Заменяем ссылки на <a> + добавляем переносы строк
+      return text.replace(urlRegex, (url) => {
+        return `<a href="${url}" target="_blank" class="problem-link">${url}</a>`;
+      }).replace(/\n/g, "<br>");
+    },
     async logout() {
       try {
         const response = await fetch('/logout.php', { method: 'POST', credentials: 'include' });
@@ -168,32 +216,32 @@ export default {
     },
 
     async fetchSubmissions() {
-      try {
-        const response = await fetch(`/get_assistant_submissions.php?page=${this.currentPage}&itemsPerPage=${this.itemsPerPage}`, {
-          method: 'GET',
-          credentials: 'include'
-        });
+  try {
+    const response = await fetch(`/get_assistant_submissions.php?page=${this.currentPage}&itemsPerPage=${this.itemsPerPage}`, {
+      method: 'GET',
+      credentials: 'include'
+    });
 
-        if (response.ok) {
-          const data = await response.json();
-          console.log("📡 Ответ от сервера:", data);
+    if (response.ok) {
+      const data = await response.json();
 
-          if (data.success) {
-            this.submissions = data.submissions;
-            this.totalCount = data.totalCount;
-            console.log("📄 Полученные заявки:", this.submissions);
-          } else {
-            console.error('❌ Ошибка загрузки данных:', data.message);
-          }
-        } else {
-          const text = await response.text();
-          console.error('Ошибка ответа сервера:', text);
-          alert('Ошибка при загрузке данных. Проверьте консоль для подробностей.');
-        }
-      } catch (error) {
-        console.error('🛑 Ошибка связи с сервером:', error);
+      if (data.success) {
+        this.submissions = data.submissions.map(sub => ({
+          ...sub,
+          file_links: this.parseLinks(sub.file_links),
+          revision_files: this.parseLinks(sub.revision_files) // Новый парсинг файлов для доработки
+        }));
+        this.totalCount = data.totalCount;
+      } else {
+        console.error('Ошибка загрузки данных:', data.message);
       }
-    },
+    } else {
+      console.error('Ошибка ответа сервера:', await response.text());
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки данных:', error);
+  }
+},
 
     formatDate(dateString) {
       if (!dateString) return '—';
@@ -201,36 +249,61 @@ export default {
     },
 
 
-
     parseLinks(fileLinks) {
-      try {
-        console.log('📂 Исходные ссылки на файлы:', fileLinks);
+  try {
+    console.log('📂 Исходные ссылки на файлы:', fileLinks);
 
-        if (Array.isArray(fileLinks) && fileLinks[0]?.url && fileLinks[0]?.name) {
-          return fileLinks;
-        }
+    // Проверка на null, undefined или пустую строку
+    if (!fileLinks || fileLinks === 'NULL' || fileLinks === '') {
+      console.warn('⚠️ fileLinks пустое или NULL');
+      return [];
+    }
 
-        if (Array.isArray(fileLinks) && typeof fileLinks[0] === 'string') {
-          return fileLinks.map(link => ({ url: link, name: link.split('/').pop() }));
-        }
+    // Если уже массив объектов с url и name, возвращаем напрямую
+    if (Array.isArray(fileLinks) && fileLinks.length > 0 && fileLinks[0]?.url && fileLinks[0]?.name) {
+      console.log('✅ fileLinks уже содержит объекты:', fileLinks);
+      return fileLinks;
+    }
 
-        if (typeof fileLinks === 'string') {
-          const links = JSON.parse(fileLinks);
-          if (Array.isArray(links) && links[0]?.url && links[0]?.name) {
-            return links;
-          }
-          if (Array.isArray(links) && typeof links[0] === 'string') {
-            return links.map(link => ({ url: link, name: link.split('/').pop() }));
-          }
-        }
+    // Если массив строк, преобразуем в массив объектов
+    if (Array.isArray(fileLinks) && typeof fileLinks[0] === 'string') {
+      console.log('✅ fileLinks является массивом строк:', fileLinks);
+      return fileLinks.map(link => ({
+        url: link,
+        name: link.split('/').pop() // Берем имя файла из URL
+      }));
+    }
 
-        console.warn('🚫 Неизвестный формат данных для fileLinks:', fileLinks);
-        return [];
-      } catch (e) {
-        console.error('🛑 Ошибка парсинга ссылок на файлы:', e, 'Исходное значение:', fileLinks);
-        return [];
+    // Если fileLinks — строка (например, JSON), пробуем парсить
+    if (typeof fileLinks === 'string') {
+      console.log('📦 Попытка парсинга JSON:', fileLinks);
+      const links = JSON.parse(fileLinks);
+
+      // Если после парсинга получили массив строк, преобразуем в объекты
+      if (Array.isArray(links) && typeof links[0] === 'string') {
+        return links.map(link => ({
+          url: link,
+          name: link.split('/').pop()
+        }));
       }
-    },
+
+      // Если получили массив объектов с url и name, возвращаем
+      if (Array.isArray(links) && links[0]?.url && links[0]?.name) {
+        return links;
+      }
+
+      console.warn('🚫 Неизвестный формат после парсинга JSON:', links);
+      return [];
+    }
+
+    console.warn('🚫 Неизвестный формат данных для fileLinks:', fileLinks);
+    return [];
+  } catch (e) {
+    console.error('🛑 Ошибка парсинга ссылок на файлы:', e, 'Исходное значение:', fileLinks);
+    return [];
+  }
+}
+,
 
     switchTab(tab) {
       this.activeTab = tab;
@@ -246,10 +319,10 @@ export default {
     },
 
     showFullProblem(problemText) {
-    this.fullProblemText = this.formatProblemText(problemText);
-    this.showModal = true;
-  },
-  closeModal() {
+      this.fullProblemText = this.formatProblemText(problemText);
+      this.showModal = true;
+    },
+    closeModal() {
       this.showModal = false;
       this.showAnswerModal = false;
       this.fullProblemText = '';
@@ -313,6 +386,7 @@ export default {
       formData.append('email', this.selectedSubmission?.email || '');
       formData.append('problem', this.selectedSubmission?.problem || '');
       formData.append('file_links', JSON.stringify(this.selectedSubmission?.file_links || []));
+      formData.append('revision_comment', this.selectedSubmission?.revision_comment || '');
 
       this.attachedFiles.forEach((file, index) => {
         formData.append(`file_${index}`, file);
@@ -341,7 +415,7 @@ export default {
         console.error('Ошибка при отправке ответа:', error);
       } finally {
         this.isLoading = false; // Скрыть индикатор загрузки в любом случае
-    }
+      }
     }
 
 
@@ -352,13 +426,16 @@ export default {
 
 <style scoped>
 .problem-text {
-  max-height: 300px; /* Ограничение по высоте */
-  overflow-y: auto; /* Скролл, если текст длинный */
+  max-height: 300px;
+  /* Ограничение по высоте */
+  overflow-y: auto;
+  /* Скролл, если текст длинный */
   padding: 10px;
   background: #f8f9fa;
   border-radius: 5px;
   text-align: left;
-  white-space: pre-line; /* Сохраняем переносы строк */
+  white-space: pre-line;
+  /* Сохраняем переносы строк */
 }
 
 .problem-text a,
@@ -366,7 +443,8 @@ export default {
   color: #007bff;
   text-decoration: none;
   font-weight: bold;
-  word-break: break-word; /* Чтобы длинные ссылки не ломали таблицу */
+  word-break: break-word;
+  /* Чтобы длинные ссылки не ломали таблицу */
 }
 
 .problem-text a:hover,
@@ -389,102 +467,107 @@ export default {
 }
 
 h1 {
-    font-size: 3rem;
-    color: #970e0e;
-    margin-bottom: 20px;
-    background-color: #970e0e;
-    -webkit-background-clip: text;
-    color: transparent;
+  font-size: 3rem;
+  color: #970e0e;
+  margin-bottom: 20px;
+  background-color: #970e0e;
+  -webkit-background-clip: text;
+  color: transparent;
 }
 
 /* Текстовые элементы */
 p {
-    font-size: 1.2rem;
-    color: #555;
+  font-size: 1.2rem;
+  color: #555;
 }
 
 h2 {
-    font-size: 2rem;
-    margin-bottom: 20px;
-    color: #3f3f3f;
+  font-size: 2rem;
+  margin-bottom: 20px;
+  color: #3f3f3f;
 }
 
 label {
-    font-weight: bold;
-    margin-bottom: 5px;
-    display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+  display: block;
 }
 
 /* Форма */
 .form-group {
-    margin-bottom: 15px;
-    text-align: left;
+  margin-bottom: 15px;
+  text-align: left;
 }
 
 input[type="text"],
 textarea,
 input[type="file"] {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    margin-top: 8px;
-    margin-bottom: 15px;
-    background-color: #f2f2f2;
-    color: #3f3f3f;
-    font-size: 1rem;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-top: 8px;
+  margin-bottom: 15px;
+  background-color: #f2f2f2;
+  color: #3f3f3f;
+  font-size: 1rem;
 }
 
 textarea {
-    height: 120px; /* Стандартная высота */
-    max-height: 300px; /* Максимальная высота */
-    overflow-y: auto; /* Вертикальный скролл при необходимости */
-    resize: vertical; /* Разрешить изменение высоты */
-    width: 100%; /* Растягивание по ширине */
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background-color: #f8f9fa;
-    font-size: 1rem;
-    color: #3f3f3f;
+  height: 120px;
+  /* Стандартная высота */
+  max-height: 300px;
+  /* Максимальная высота */
+  overflow-y: auto;
+  /* Вертикальный скролл при необходимости */
+  resize: vertical;
+  /* Разрешить изменение высоты */
+  width: 100%;
+  /* Растягивание по ширине */
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  font-size: 1rem;
+  color: #3f3f3f;
 }
 
 
 /* Кнопки */
 button {
-    padding: 10px 15px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: background-color 0.3s;
-    color: white;
-    background-color: #970e0e;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s;
+  color: white;
+  background-color: #970e0e;
 
 }
 
 .submit-button {
-    background-color: #970e0e;
+  background-color: #970e0e;
 }
 
 .submit-button:hover {
-    background-color: #b91010;
+  background-color: #b91010;
 }
 
 .close-button {
-    background-color: #3f3f3f;
+  background-color: #3f3f3f;
 }
 
 .close-button:hover {
-    background-color: #2c2c2c;
+  background-color: #2c2c2c;
 }
 
 .answer-button {
-    background-color: #5bc0de;
+  background-color: #5bc0de;
 }
 
 .answer-button:hover {
-    background-color: #31b0d5;
+  background-color: #31b0d5;
 }
 
 .expand-button {
@@ -503,40 +586,43 @@ button {
 
 /* Модальное окно */
 .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
 
 .modal-content {
-    background: #e4e1dc;
-    padding: 30px;
-    border-radius: 12px;
-    max-width: 600px;
-    width: 90%;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-    text-align: left;
+  background: #e4e1dc;
+  padding: 30px;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 90%;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  text-align: left;
 }
 
 .modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
+
 .dashboard {
   padding: 20px;
 }
+
 .navbar {
   margin-top: 10px;
   display: flex;
-  justify-content: space-between; /* Распределяет элементы: один влево, другой вправо */
+  justify-content: space-between;
+  /* Распределяет элементы: один влево, другой вправо */
   align-items: center;
   padding: 10px 20px;
   background-color: #ffffff;
@@ -547,55 +633,57 @@ button {
   display: flex;
   align-items: center;
 }
+
 /* Таблица */
 .submissions-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .submissions-table th,
 .submissions-table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
 }
 
 .submissions-table th {
-    background-color: #f2f2f2;
-    color: #333;
+  background-color: #f2f2f2;
+  color: #333;
 }
 
 /* Индикатор загрузки */
 .global-loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 2000;
-    backdrop-filter: blur(4px);
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  backdrop-filter: blur(4px);
 }
 
 .global-loader {
-    text-align: center;
-    color: white;
+  text-align: center;
+  color: white;
 }
 
 .spinner {
-    border: 6px solid rgba(255, 255, 255, 0.3);
-    border-top: 6px solid #970e0e;
-    border-radius: 50%;
-    width: 60px;
-    height: 60px;
-    animation: spin 1s linear infinite;
-    margin-bottom: 15px;
+  border: 6px solid rgba(255, 255, 255, 0.3);
+  border-top: 6px solid #970e0e;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
 }
+
 .logout-button {
   padding: 10px 20px;
   background-color: #970e0e;
@@ -610,16 +698,14 @@ button {
 .logout-button:hover {
   background-color: #b91010;
 }
+
 @keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
-
-
-
-
 </style>

@@ -243,23 +243,36 @@
             <th>Дата создания</th>
             <th>Дата отправки помощнику</th>
             <th>Дата решения помощником</th>
+            <th>Дата отправки на доработку</th>
+            <th>Дата когда была доработана заявка</th>
             <th>Время на решение (минут)</th>
+            <th>Время на решение доработки (минут)</th>
             <th>Информация о заявке</th>
-
+            <th>Действия</th>
             <th>Действия</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="submission in paginatedResolvedSubmissions" :key="submission.id">
-
             <td>{{ submission.id }}</td>
             <td>{{ new Date(submission.created_at).toLocaleString() }}</td>
             <td>{{ submission.assistant_sent_at ? new Date(submission.assistant_sent_at).toLocaleString() : 'Не указано'
-            }}</td>
-            <td>{{ submission.assistant_resolved_at ? new Date(submission.assistant_resolved_at).toLocaleString() : 'Не  указано' }}</td>
-            
+            }}
+            </td>
+            <td>{{ submission.assistant_resolved_at ? new Date(submission.assistant_resolved_at).toLocaleString() : 'Не указано' }}</td>
+              
+
+            <td>{{ submission.revision_requested_at ? new Date(submission.revision_requested_at).toLocaleString() : 'Не указано' }}</td>
+              
+
+            <td>{{ submission.revision_completed_at ? new Date(submission.revision_completed_at).toLocaleString() : 'Не указано' }}</td>
+             
 
             <td>{{ submission.resolution_time_minutes !== '—' ? submission.resolution_time_minutes : '—' }}</td>
+            <td>{{ submission.revision_resolution_time_minutes !== undefined ? submission.revision_resolution_time_minutes : '—' }}</td>
+
+
+
 
 
             <td>
@@ -277,11 +290,48 @@
             <td>
               <button class="delete-button" @click="deleteSubmission(submission.id)">Удалить</button>
             </td>
-
+            <td>
+              <button class="revision-button" @click="openRevisionModal(submission.id)"
+                style="background-color: #5D46A7; color: white;">
+                Отправить на доработку
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
       <p v-else>Нет решенных заявок.</p>
+      <!-- Модальное окно "Отправить на доработку" -->
+      <div v-if="showRevisionModal" class="modal-overlay">
+        <div class="modal-content">
+          <h2>Отправить заявку на доработку</h2>
+
+          <!-- Поле для комментария -->
+          <textarea v-model="revisionComment" placeholder="Введите причину доработки..." class="input-field"></textarea>
+
+          <!-- Прикрепление файлов -->
+          <div class="file-upload">
+            <input type="file" @change="handleFileUpload" multiple>
+            <p>Максимум 5 файлов, до 25МБ</p>
+            <ul>
+              <li v-for="(file, index) in selectedFiles" :key="index">
+                {{ file.name }} ({{ (file.size / 1024 / 1024).toFixed(2) }}MB)
+                <button @click="removeFile(index)">❌</button>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Кнопки -->
+          <div class="modal-buttons">
+            <button @click="submitRevision" class="submit-button" :disabled="isUploading">
+              <span v-if="isUploading" class="loader"></span>
+              <span v-else>Отправить</span>
+            </button>
+            <button @click="closeRevisionModal" class="cancel-button">Отмена</button>
+          </div>
+        </div>
+      </div>
+
+
       <div class="pagination">
         <!-- Кнопка "Первая страница" -->
         <button @click="changePage(activeTab, 1)" :disabled="currentPage[activeTab] === 1">«</button>
@@ -334,6 +384,11 @@ export default {
       resolvedSubmissions: [],
       showModal: false,
       fullProblemText: '',
+      showRevisionModal: false,
+      revisionComment: "",
+      selectedFiles: [],
+      isUploading: false,
+      currentSubmissionId: null,
 
       // Пагинация для разных вкладок
       currentPage: {
@@ -421,6 +476,70 @@ export default {
     this.fetchSubmissions();
   },
   methods: {
+    // Открытие модального окна
+    openRevisionModal(submissionId) {
+      this.currentSubmissionId = submissionId;
+      this.showRevisionModal = true;
+      this.revisionComment = "";
+      this.selectedFiles = [];
+    },
+
+    // Закрытие модального окна
+    closeRevisionModal() {
+      this.showRevisionModal = false;
+    },
+
+    // Обработка загрузки файлов
+    handleFileUpload(event) {
+      const files = Array.from(event.target.files);
+      files.forEach((file) => {
+        if (file.size <= 25 * 1024 * 1024 && this.selectedFiles.length < 5) {
+          this.selectedFiles.push(file);
+        }
+      });
+    },
+
+    // Удаление файла
+    removeFile(index) {
+      this.selectedFiles.splice(index, 1);
+    },
+
+    // Отправка заявки на доработку
+    async submitRevision() {
+      this.isUploading = true;
+
+      const formData = new FormData();
+      formData.append("submission_id", this.currentSubmissionId);
+      formData.append("revision_comment", this.revisionComment);
+
+      this.selectedFiles.forEach((file, index) => {
+        console.log("Файл отправляется:", file.name, "Размер:", file.size, "Тип:", file.type);
+        formData.append(`files[]`, file); // Используем массив `files[]`, чтобы PHP правильно принял файлы
+      });
+      try {
+        const response = await fetch("/send_revision.php", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          alert("Заявка успешно отправлена на доработку.");
+
+          // Обновляем данные в таблице
+          this.fetchSubmissions();
+
+          // Закрываем модальное окно
+          this.closeRevisionModal();
+        } else {
+          alert("Ошибка: " + data.message);
+        }
+      } catch (error) {
+        console.error("Ошибка при отправке:", error);
+      } finally {
+        this.isUploading = false;
+      }
+    },
     formatProblemText(text) {
       if (!text) return "";
 
@@ -435,45 +554,92 @@ export default {
     ,
     async fetchSubmissions() {
       try {
-        const currentPage = this.currentPage[this.activeTab]; // Берем текущую страницу активной вкладки
-        const response = await fetch(`/get_submissions.php?page=${currentPage}&itemsPerPage=${this.itemsPerPage}`, { credentials: 'include' });
+        console.log("🔄 Загружаем заявки...");
+
+        const response = await fetch(`/get_submissions.php?page=${this.currentPage[this.activeTab]}&itemsPerPage=${this.itemsPerPage}`, { credentials: 'include' });
 
         if (!response.ok) {
-          console.error('Ошибка ответа сервера:', response.status, response.statusText);
+          console.error('❌ Ошибка ответа сервера:', response.status, response.statusText);
           return;
         }
 
         const data = await response.json();
+        console.log("📌 Данные из API перед обработкой:", data.resolvedSubmissions);
 
         if (data.success) {
-          // Загружаем заявки только для активной вкладки
-          if (this.activeTab === "active") {
-            this.submissions = data.submissions || [];
-          } else if (this.activeTab === "deleted") {
-            this.deletedSubmissions = data.deletedSubmissions || [];
-          } else if (this.activeTab === "assistant") {
-            this.assistantSubmissions = data.assistantSubmissions || [];
-          } else if (this.activeTab === "resolved") {
-            this.resolvedSubmissions = data.resolvedSubmissions || [];
+          // Сортируем заявки (если API вернул массив)
+          this.submissions = Array.isArray(data.submissions) ? data.submissions.sort((a, b) => b.id - a.id) : [];
+          this.assistantSubmissions = Array.isArray(data.assistantSubmissions) ? data.assistantSubmissions.sort((a, b) => b.id - a.id) : [];
+          this.deletedSubmissions = Array.isArray(data.deletedSubmissions) ? data.deletedSubmissions.sort((a, b) => b.id - a.id) : [];
+
+          // Решенные заявки
+          if (Array.isArray(data.resolvedSubmissions)) {
+            this.resolvedSubmissions = data.resolvedSubmissions.map(submission => {
+              // 📅 Получаем даты
+              const sentAt = submission.assistant_sent_at ? new Date(submission.assistant_sent_at.replace(' ', 'T')) : null;
+              const resolvedAt = submission.assistant_resolved_at ? new Date(submission.assistant_resolved_at.replace(' ', 'T')) : null;
+              const revisionRequestedAt = submission.revision_requested_at ? new Date(submission.revision_requested_at.replace(' ', 'T')) : null;
+              const revisionCompletedAt = submission.revision_completed_at ? new Date(submission.revision_completed_at.replace(' ', 'T')) : null;
+
+              let resolutionTime = '—';
+              let revisionResolutionTime = '—';
+
+              // ✅ Вычисляем "Время на решение (минут)"
+              if (sentAt && resolvedAt && !isNaN(sentAt) && !isNaN(resolvedAt)) {
+                const diffMs = resolvedAt - sentAt;
+                const minutes = Math.floor(diffMs / 60000);
+                resolutionTime = `${minutes} мин`;
+              }
+
+              if (revisionRequestedAt && revisionCompletedAt) {
+    if (!isNaN(revisionRequestedAt.getTime()) && !isNaN(revisionCompletedAt.getTime())) {
+        const diffMs = revisionCompletedAt - revisionRequestedAt;
+        const minutes = Math.floor(diffMs / 60000);
+        const seconds = Math.max(1, Math.floor((diffMs % 60000) / 1000)); // Минимум 1 секунда
+
+        if (diffMs < 60000) {
+            revisionResolutionTime = `${seconds} сек`;
+        } else {
+            revisionResolutionTime = `${minutes} мин ${seconds} сек`;
+        }
+    } else {
+        console.warn("⚠️ Ошибка: некорректные даты revision_requested_at или revision_completed_at", submission);
+        revisionResolutionTime = "1 сек"; // Минимальное значение
+    }
+} else {
+    revisionResolutionTime = "—"; // Если данных вообще нет
+}
+
+
+
+              return {
+                ...submission,
+                assistant_resolved_at: submission.assistant_resolved_at || 'Не указано',
+                resolution_time_minutes: resolutionTime !== '—' ? resolutionTime : '—',
+                revision_resolution_time_minutes: revisionResolutionTime !== '—' ? revisionResolutionTime : '—',
+              };
+            }).sort((a, b) => b.id - a.id);
+          } else {
+            this.resolvedSubmissions = [];
           }
 
-          // Обновляем общее количество записей
-          this.totalCount = data.totalCount;
+          // 🔢 Обновление количества заявок
+          this.totalCount.active = data.totalCount.active || 0;
+          this.totalCount.deleted = data.totalCount.deleted || 0;
+          this.totalCount.assistant = data.totalCount.assistant || 0;
+          this.totalCount.resolved = data.totalCount.resolved || 0;
+
+          console.log("✅ Обновленный список решенных заявок:", this.resolvedSubmissions);
         } else {
-          console.error('Ошибка загрузки данных:', data.message);
+          console.error('❌ Ошибка загрузки данных:', data.message);
         }
       } catch (error) {
-        console.error('Ошибка загрузки заявок:', error);
+        console.error('❌ Ошибка загрузки заявок:', error);
       }
     }
 
 
-
-
-
     ,
-
-
 
     async shareWithAssistant(id) {
       try {
@@ -620,7 +786,7 @@ export default {
               return {
                 ...submission,
                 assistant_resolved_at: submission.assistant_resolved_at || 'Не указано',
-                resolution_time_minutes: resolutionTime !== '—' ? resolutionTime : '—'
+                resolution_time_minutes: resolutionTime !== '—' ? resolutionTime : '—',
               };
             }).sort((a, b) => b.id - a.id);
           } else {
@@ -1008,5 +1174,63 @@ p {
 
 .restore-button:hover {
   background-color: #0d960d;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: #e4e1dc;
+  padding: 20px;
+  border-radius: 10px;
+  width: 400px;
+  text-align: center;
+}
+
+.input-field {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #730e0e;
+}
+
+.submit-button {
+  background: #730e0e;
+  color: white;
+  padding: 10px;
+}
+
+.cancel-button {
+  background: gray;
+  color: white;
+  padding: 10px;
+}
+
+.loader {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #730e0e;
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 </style>

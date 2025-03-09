@@ -25,7 +25,7 @@ $sql = "SELECT id, surname, name, patronymic, phone, email, problem, file_links,
 
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("ii", $offset, $itemsPerPage);
-$stmt->execute();   
+$stmt->execute();
 $result = $stmt->get_result();
 
 $submissions = [];
@@ -78,16 +78,20 @@ $countResultResolved = $conn->query("SELECT COUNT(*) as total FROM form_submissi
 $totalCountResolved = $countResultResolved->fetch_assoc()['total'];
 
 // Решенные заявки (resolved = 1)
-$sqlResolved = "SELECT id, surname, name, patronymic, phone, email, problem, file_links, deleted, created_at, assistant_sent_at, assistant_resolved_at, resolved
+$sqlResolved = "SELECT id, surname, name, patronymic, phone, email, problem, file_links, deleted, created_at, 
+                       assistant_sent_at, assistant_resolved_at, resolved, revision_requested_at, 
+                       revision_completed_at, revision_comment, revision_files
                 FROM form_submissions 
                 WHERE resolved = 1 AND deleted = 0
                 ORDER BY id DESC";
+
 
 $resultResolved = $conn->query($sqlResolved);
 
 $resolvedSubmissions = [];
 while ($row = $resultResolved->fetch_assoc()) {
     $row['file_links'] = !empty($row['file_links']) ? json_decode($row['file_links']) : [];
+    $row['revision_files'] = !empty($row['revision_files']) ? json_decode($row['revision_files']) : [];
     $resolvedSubmissions[] = $row;
 }
 
