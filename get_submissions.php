@@ -14,14 +14,15 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'lawyer') {
 
 // Получение текущей страницы и количества записей на страницу
 $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
-$itemsPerPage = isset($_GET['itemsPerPage']) ? intval($_GET['itemsPerPage']) : 5;
+$itemsPerPage = isset($_GET['itemsPerPage']) ? intval($_GET['itemsPerPage']) : 10;
 $offset = ($page - 1) * $itemsPerPage; // Теперь правильно считаем сдвиг
 
 $sql = "SELECT id, surname, name, patronymic, phone, email, problem, file_links, deleted, created_at, visible_to_assistant 
         FROM form_submissions 
-        WHERE visible_to_assistant = 0 AND deleted = 0
+        WHERE deleted = 0 AND (resolved = 0 OR resolved IS NULL) AND visible_to_assistant = 0
         ORDER BY id DESC 
         LIMIT ?, ?";
+
 
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("ii", $offset, $itemsPerPage);

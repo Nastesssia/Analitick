@@ -13,7 +13,8 @@ class DB_Connect {
         
         // Connecting to mysql database
         $this->conn = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_DATABASE);
-        
+          // Устанавливаем часовой пояс на Калининград (+2)
+          $this->conn->query("SET time_zone = '+02:00'");
         // return database handler
         return $this->conn;
     }

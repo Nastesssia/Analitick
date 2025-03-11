@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <h1>Кабинет помощника</h1>
-    <p>Добро пожаловать в кабинет помощника. Здесь вы можете отвечать на заявки</p>
+    <p>Добро пожаловать в кабинет помощника. Здесь вы можете отвечать на заявки.</p>
   </div>
 
   <div class="navbar">
@@ -16,10 +16,10 @@
       <table class="submissions-table" v-if="paginatedSubmissions.length > 0">
         <thead>
           <tr>
-            <th>Дата отправки помощнику</th>
-            <th>Дата запроса на доработку</th> <!-- Новая колонка -->
-            <th>Комментарий на доработку</th> <!-- Новая колонка -->
-            <th>Файлы для доработки</th> <!-- Новая колонка -->
+            <th class="assistant-header">Дата отправки помощнику</th>
+            <th class="revision-header">Дата запроса на доработку</th>
+            <th class="revision-header">Комментарий на доработку</th>
+            <th class="revision-header">Файлы для доработки</th>
             <th>Проблема</th>
             <th>Ссылки на файлы</th>
             <th>Действия</th>
@@ -77,15 +77,37 @@
         </tbody>
       </table>
       <p v-else>Заявок пока нет.</p>
+      <div class="pagination">
+        <!-- Кнопка "Первая страница" -->
+        <button @click="changePage(1)" :disabled="currentPage === 1">«</button>
+
+        <!-- Кнопка "Назад" -->
+        <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1">‹</button>
+
+        <!-- Перебор страниц с учетом скрытых -->
+        <template v-for="page in visiblePages">
+          <button v-if="page === '...'" class="dots" disabled>...</button>
+          <button v-else :class="{ active: page === currentPage }" @click="changePage(page)">
+            {{ page }}
+          </button>
+        </template>
+
+        <!-- Кнопка "Вперед" -->
+        <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages">›</button>
+
+        <!-- Кнопка "Последняя страница" -->
+        <button @click="changePage(totalPages)" :disabled="currentPage === totalPages">»</button>
+      </div>
+
     </div>
-<!-- Модальное окно для полного комментария -->
-<div v-if="showCommentModal" class="modal-overlay">
-  <div class="modal-content">
-    <h2>Комментарий на доработку</h2>
-    <p>{{ fullCommentText }}</p>
-    <button class="close-button" @click="closeCommentModal">Закрыть</button>
-  </div>
-</div>
+    <!-- Модальное окно для полного комментария -->
+    <div v-if="showCommentModal" class="modal-overlay">
+      <div class="modal-content">
+        <h2>Комментарий на доработку</h2>
+        <p>{{ fullCommentText }}</p>
+        <button class="close-button" @click="closeCommentModal">Закрыть</button>
+      </div>
+    </div>
     <!-- Модальное окно для ответа на заявку -->
     <div v-if="showAnswerModal" class="modal-overlay">
       <div class="modal-content">
@@ -103,7 +125,12 @@
 
         <div class="form-group">
           <label>Прикрепить файлы (до 5 файлов, максимум 25 МБ, запрещены .zip, .rar, .7z):</label>
-          <input type="file" multiple @change="handleFileUpload" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.txt" />
+          <div class="file-upload">
+            <label for="file-upload-button" class="file-upload-label">📂 Выбрать файлы</label>
+            <input type="file" id="file-upload-button" multiple @change="handleFileUpload" />
+            <p class="file-upload-info">Максимум 5 файлов, до 25МБ</p>
+          </div>
+
           <p>Прикреплено файлов: {{ attachedFiles.length }} / 5</p>
           <ul>
             <li v-for="(file, index) in attachedFiles" :key="index">
@@ -156,7 +183,7 @@ export default {
       answerText: '',
       attachedFiles: [],
       currentPage: 1,
-      itemsPerPage: 5,
+      itemsPerPage: 10,
       totalCount: 0,
       showModal: false,
       fullProblemText: '',
@@ -167,24 +194,59 @@ export default {
     this.fetchSubmissions();
   },
   computed: {
+    visiblePages() {
+      const total = this.totalPages;
+      const current = this.currentPage;
+      const delta = 2; // Количество страниц слева и справа от активной
+      const range = [];
+      let left = Math.max(2, current - delta);
+      let right = Math.min(total - 1, current + delta);
+
+      // Добавляем первую страницу всегда
+      range.push(1);
+
+      // Добавляем `...` если слева больше страниц
+      if (left > 2) {
+        range.push("...");
+      }
+
+      // Добавляем страницы в диапазоне
+      for (let i = left; i <= right; i++) {
+        range.push(i);
+      }
+
+      // Добавляем `...` если справа есть скрытые страницы
+      if (right < total - 1) {
+        range.push("...");
+      }
+
+      // Добавляем последнюю страницу всегда
+      if (total > 1) {
+        range.push(total);
+      }
+
+      return range;
+    }
+    ,
     paginatedSubmissions() {
-      const start = (this.currentPage - 1) * this.itemsPerPage;
-      return this.submissions.slice(start, start + this.itemsPerPage);
+      return this.submissions;
     },
     totalPages() {
-      return Math.ceil(this.totalCount / this.itemsPerPage);
+      const pages = Math.max(1, Math.ceil(this.totalCount / this.itemsPerPage));
+      console.log(`📖 Пересчет totalPages: ${pages}`);
+      return pages;
     }
   },
   methods: {
     showFullComment(commentText) {
-  this.fullCommentText = commentText;
-  this.showCommentModal = true;
-},
+      this.fullCommentText = commentText;
+      this.showCommentModal = true;
+    },
 
-closeCommentModal() {
-  this.showCommentModal = false;
-  this.fullCommentText = '';
-},
+    closeCommentModal() {
+      this.showCommentModal = false;
+      this.fullCommentText = '';
+    },
     formatProblemText(text) {
       if (!text) return "";
 
@@ -216,32 +278,40 @@ closeCommentModal() {
     },
 
     async fetchSubmissions() {
-  try {
-    const response = await fetch(`/get_assistant_submissions.php?page=${this.currentPage}&itemsPerPage=${this.itemsPerPage}`, {
-      method: 'GET',
-      credentials: 'include'
-    });
+      try {
+        console.log(`🔄 Запрос заявок: Страница ${this.currentPage}, Кол-во на странице ${this.itemsPerPage}`);
 
-    if (response.ok) {
-      const data = await response.json();
+        const response = await fetch(`/get_assistant_submissions.php?page=${this.currentPage}&itemsPerPage=${this.itemsPerPage}`, {
+          method: 'GET',
+          credentials: 'include'
+        });
 
-      if (data.success) {
-        this.submissions = data.submissions.map(sub => ({
-          ...sub,
-          file_links: this.parseLinks(sub.file_links),
-          revision_files: this.parseLinks(sub.revision_files) // Новый парсинг файлов для доработки
-        }));
-        this.totalCount = data.totalCount;
-      } else {
-        console.error('Ошибка загрузки данных:', data.message);
+        if (!response.ok) {
+          console.error("❌ Ошибка сервера:", await response.text());
+          return;
+        }
+
+        const data = await response.json();
+        console.log("📡 Данные с сервера:", data);
+
+        if (data.success) {
+          this.submissions = data.submissions.map(sub => ({
+            ...sub,
+            file_links: this.parseLinks(sub.file_links),
+            revision_files: this.parseLinks(sub.revision_files)
+          }));
+          this.totalCount = data.totalCount;
+
+          console.log(`📊 Всего заявок: ${this.totalCount}, Кол-во страниц: ${this.totalPages}`);
+        } else {
+          console.error("⚠️ Ошибка загрузки данных:", data.message);
+        }
+      } catch (error) {
+        console.error("🛑 Ошибка запроса:", error);
       }
-    } else {
-      console.error('Ошибка ответа сервера:', await response.text());
     }
-  } catch (error) {
-    console.error('Ошибка загрузки данных:', error);
-  }
-},
+    ,
+
 
     formatDate(dateString) {
       if (!dateString) return '—';
@@ -250,60 +320,60 @@ closeCommentModal() {
 
 
     parseLinks(fileLinks) {
-  try {
-    console.log('📂 Исходные ссылки на файлы:', fileLinks);
+      try {
+        console.log('📂 Исходные ссылки на файлы:', fileLinks);
 
-    // Проверка на null, undefined или пустую строку
-    if (!fileLinks || fileLinks === 'NULL' || fileLinks === '') {
-      console.warn('⚠️ fileLinks пустое или NULL');
-      return [];
-    }
+        // Проверка на null, undefined или пустую строку
+        if (!fileLinks || fileLinks === 'NULL' || fileLinks === '') {
+          console.warn('⚠️ fileLinks пустое или NULL');
+          return [];
+        }
 
-    // Если уже массив объектов с url и name, возвращаем напрямую
-    if (Array.isArray(fileLinks) && fileLinks.length > 0 && fileLinks[0]?.url && fileLinks[0]?.name) {
-      console.log('✅ fileLinks уже содержит объекты:', fileLinks);
-      return fileLinks;
-    }
+        // Если уже массив объектов с url и name, возвращаем напрямую
+        if (Array.isArray(fileLinks) && fileLinks.length > 0 && fileLinks[0]?.url && fileLinks[0]?.name) {
+          console.log('✅ fileLinks уже содержит объекты:', fileLinks);
+          return fileLinks;
+        }
 
-    // Если массив строк, преобразуем в массив объектов
-    if (Array.isArray(fileLinks) && typeof fileLinks[0] === 'string') {
-      console.log('✅ fileLinks является массивом строк:', fileLinks);
-      return fileLinks.map(link => ({
-        url: link,
-        name: link.split('/').pop() // Берем имя файла из URL
-      }));
-    }
+        // Если массив строк, преобразуем в массив объектов
+        if (Array.isArray(fileLinks) && typeof fileLinks[0] === 'string') {
+          console.log('✅ fileLinks является массивом строк:', fileLinks);
+          return fileLinks.map(link => ({
+            url: link,
+            name: link.split('/').pop() // Берем имя файла из URL
+          }));
+        }
 
-    // Если fileLinks — строка (например, JSON), пробуем парсить
-    if (typeof fileLinks === 'string') {
-      console.log('📦 Попытка парсинга JSON:', fileLinks);
-      const links = JSON.parse(fileLinks);
+        // Если fileLinks — строка (например, JSON), пробуем парсить
+        if (typeof fileLinks === 'string') {
+          console.log('📦 Попытка парсинга JSON:', fileLinks);
+          const links = JSON.parse(fileLinks);
 
-      // Если после парсинга получили массив строк, преобразуем в объекты
-      if (Array.isArray(links) && typeof links[0] === 'string') {
-        return links.map(link => ({
-          url: link,
-          name: link.split('/').pop()
-        }));
+          // Если после парсинга получили массив строк, преобразуем в объекты
+          if (Array.isArray(links) && typeof links[0] === 'string') {
+            return links.map(link => ({
+              url: link,
+              name: link.split('/').pop()
+            }));
+          }
+
+          // Если получили массив объектов с url и name, возвращаем
+          if (Array.isArray(links) && links[0]?.url && links[0]?.name) {
+            return links;
+          }
+
+          console.warn('🚫 Неизвестный формат после парсинга JSON:', links);
+          return [];
+        }
+
+        console.warn('🚫 Неизвестный формат данных для fileLinks:', fileLinks);
+        return [];
+      } catch (e) {
+        console.error('🛑 Ошибка парсинга ссылок на файлы:', e, 'Исходное значение:', fileLinks);
+        return [];
       }
-
-      // Если получили массив объектов с url и name, возвращаем
-      if (Array.isArray(links) && links[0]?.url && links[0]?.name) {
-        return links;
-      }
-
-      console.warn('🚫 Неизвестный формат после парсинга JSON:', links);
-      return [];
     }
-
-    console.warn('🚫 Неизвестный формат данных для fileLinks:', fileLinks);
-    return [];
-  } catch (e) {
-    console.error('🛑 Ошибка парсинга ссылок на файлы:', e, 'Исходное значение:', fileLinks);
-    return [];
-  }
-}
-,
+    ,
 
     switchTab(tab) {
       this.activeTab = tab;
@@ -312,7 +382,8 @@ closeCommentModal() {
     },
 
     changePage(page) {
-      if (page > 0 && page <= this.totalPages) {
+      if (page !== "..." && page > 0 && page <= this.totalPages) {
+        console.log(`📦 Переход на страницу: ${this.currentPage} → ${page}`);
         this.currentPage = page;
         this.fetchSubmissions();
       }
@@ -452,7 +523,15 @@ closeCommentModal() {
   text-decoration: underline;
 }
 
-
+.close-button {
+  padding: 10px 20px;
+  border: none;
+  background-color: #d9534f;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 20px;
+}
 
 
 
@@ -496,40 +575,69 @@ label {
 /* Форма */
 .form-group {
   margin-bottom: 15px;
-  text-align: left;
 }
 
+.form-group label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 5px;
+  color: #444;
+}
+
+
+/* Поля ввода */
 input[type="text"],
-textarea,
-input[type="file"] {
-  width: 100%;
+textarea {
+  width: 90%;
   padding: 10px;
-  border: 1px solid #ddd;
+  border: 2px solid #ddd;
   border-radius: 8px;
-  margin-top: 8px;
-  margin-bottom: 15px;
-  background-color: #f2f2f2;
-  color: #3f3f3f;
-  font-size: 1rem;
+  font-size: 14px;
+  resize: none;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+input[type="text"]:focus,
+textarea:focus {
+  border-color: #5D46A7;
 }
 
 textarea {
   height: 120px;
-  /* Стандартная высота */
   max-height: 300px;
-  /* Максимальная высота */
   overflow-y: auto;
-  /* Вертикальный скролл при необходимости */
-  resize: vertical;
-  /* Разрешить изменение высоты */
-  width: 100%;
-  /* Растягивание по ширине */
-  padding: 10px;
+}
+
+/* Файлы */
+.form-group input[type="file"] {
+  margin-top: 5px;
+}
+
+.form-group ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 10px;
+}
+
+.form-group li {
+  background: #f9f9f9;
+  padding: 8px;
+  border-radius: 6px;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
   border: 1px solid #ddd;
-  border-radius: 8px;
-  background-color: #f8f9fa;
-  font-size: 1rem;
-  color: #3f3f3f;
+}
+
+.form-group li button {
+  background: transparent;
+  border: none;
+  color: #d9534f;
+  cursor: pointer;
+  font-size: 14px;
 }
 
 
@@ -554,13 +662,6 @@ button {
   background-color: #b91010;
 }
 
-.close-button {
-  background-color: #3f3f3f;
-}
-
-.close-button:hover {
-  background-color: #2c2c2c;
-}
 
 .answer-button {
   background-color: #5bc0de;
@@ -584,34 +685,78 @@ button {
   background-color: #990f5d;
 }
 
-/* Модальное окно */
+/* Фон модального окна */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  backdrop-filter: blur(5px);
 }
 
+/* Контент модального окна */
 .modal-content {
-  background: #e4e1dc;
-  padding: 30px;
+  background: #ffffff;
+  padding: 25px;
   border-radius: 12px;
-  max-width: 600px;
-  width: 90%;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  width: 500px;
+  max-width: 90%;
   text-align: left;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  position: relative;
+  animation: fadeIn 0.3s ease-in-out;
 }
+
+/* Заголовок */
+.modal-content h2 {
+  font-size: 20px;
+  color: #333;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
 
 .modal-actions {
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.modal-actions button {
+  padding: 12px 18px;
+  font-size: 14px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+
+/* Кнопка "Отправить" */
+.modal-actions button:first-child {
+  background: linear-gradient(135deg, #5D46A7, #3E2C82);
+  color: white;
+}
+
+.modal-actions button:first-child:hover {
+  background: linear-gradient(135deg, #3E2C82, #2A1E5F);
+  transform: translateY(-2px);
+}
+
+/* Кнопка "Отмена" */
+.modal-actions button:last-child {
+  background: #ccc;
+  color: white;
+}
+
+.modal-actions button:last-child:hover {
+  background: #aaa;
 }
 
 .dashboard {
@@ -655,6 +800,7 @@ button {
 }
 
 /* Индикатор загрузки */
+/* Индикатор загрузки */
 .global-loading-overlay {
   position: fixed;
   top: 0;
@@ -676,10 +822,10 @@ button {
 
 .spinner {
   border: 6px solid rgba(255, 255, 255, 0.3);
-  border-top: 6px solid #970e0e;
+  border-top: 6px solid #5D46A7;
   border-radius: 50%;
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
   animation: spin 1s linear infinite;
   margin-bottom: 15px;
 }
@@ -697,6 +843,106 @@ button {
 
 .logout-button:hover {
   background-color: #b91010;
+}
+
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 20px;
+}
+
+.pagination button {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 7px;
+  background: white;
+  cursor: pointer;
+  color: #ccc;
+  font-size: 14px;
+
+}
+
+.pagination button.active {
+  background: #970e0e;
+  color: white;
+  font-weight: bold;
+}
+
+.pagination button:hover {
+  background: #b91010;
+  color: white;
+}
+
+.pagination button.dots {
+  background: none;
+  border: none;
+  cursor: default;
+  font-weight: bold;
+  width: 40px;
+}
+
+.submissions-table th.revision-header {
+  background-color: #5d46a78a;
+  /* Оранжевый */
+  color: white;
+  padding: 10px;
+  text-align: center;
+}
+
+/* Стиль для заголовка "Дата отправки помощнику" */
+.submissions-table th.assistant-header {
+  background-color: #cb7f4185;
+  /* Фиолетовый */
+  color: white;
+  padding: 10px;
+  text-align: center;
+}
+/* Скрываем стандартный input */
+#file-upload-button {
+  display: none;
+}
+
+/* Стили для кастомной кнопки */
+.file-upload-label {
+  display: inline-block;
+  background-color: #6f53d86c ;
+  padding: 12px 20px;
+  border-radius: 8px;
+  color:white;
+  margin: 0px;
+  font-size: 14px;
+  width: 30%;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+
+.file-upload-label:hover {
+  transform: translateY(-2px);
+}
+
+.file-upload-label:active {
+  transform: translateY(1px);
+}
+
+/* Добавляем стиль к тексту с количеством загруженных файлов */
+.file-upload-info {
+  font-size: 12px;
+  color: #666;
+  margin-top: 5px;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes spin {

@@ -16,7 +16,6 @@ error_reporting(E_ALL);
 
 // Проверка авторизации
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'assistant') {
-    
     echo json_encode(['success' => false, 'message' => 'Доступ запрещен.']);
     exit();
 }
@@ -36,24 +35,9 @@ $problem = trim($data['problem'] ?? '');
 $file_links = json_decode($data['file_links'] ?? '[]', true);
 $revision_comment = trim($data['revision_comment'] ?? ''); // Комментарий на доработку
 
-// Проверяем, загружены ли файлы
-$revision_files = [];
-if (!empty($_FILES)) {
-    foreach ($_FILES as $file) {
-        if ($file['error'] === UPLOAD_ERR_OK) {
-            $revision_files[] = ['name' => $file['name']];
-        }
-    }
-}
-
-// Проверка, является ли ответ доработкой
-$is_revision = !empty($revision_comment) || !empty($revision_files);
+// 🔹 Теперь **файлы не влияют** на определение доработки
+$is_revision = !empty($revision_comment);
 error_log("🔍 Это доработка? " . ($is_revision ? "Да" : "Нет"));
-
-// Логирование данных
-error_log("📦 Данные: " . json_encode($data, JSON_UNESCAPED_UNICODE));
-error_log("📂 Файлы: " . json_encode($_FILES, JSON_UNESCAPED_UNICODE));
-error_log("🔍 Доработка: " . ($is_revision ? "Да" : "Нет"));
 
 // Проверка обязательных данных
 if (empty($subject) || empty($answer_text) || empty($email) || empty($problem)) {
@@ -65,7 +49,7 @@ if (empty($subject) || empty($answer_text) || empty($email) || empty($problem)) 
 $db = new DB_Connect();
 $conn = $db->connect();
 
-// Поиск заявки по email и тексту проблемы
+// Поиск заявки по email и проблеме
 $stmt = $conn->prepare("SELECT id FROM form_submissions WHERE email = ? AND problem = ? LIMIT 1");
 $stmt->bind_param("ss", $email, $problem);
 $stmt->execute();
@@ -104,7 +88,7 @@ try {
     $mail->Subject = "Ответ на заявку: {$subject}" . ($is_revision ? " (Доработка)" : "");
 
     // Формирование тела письма
-    $mailContent = "<h2>Копия заявки:</h2>
+    $mailContent = "<h2>Копия заявки клиента:</h2>
         <p><strong>Фамилия:</strong> {$surname}</p>
         <p><strong>Имя:</strong> {$name}</p>
         <p><strong>Отчество:</strong> {$patronymic}</p>
@@ -129,11 +113,11 @@ try {
     if ($is_revision) {
         error_log("🛠 Обновляем заявку ID {$submission_id} с доработкой...");
 
-        $mailContent .= "<hr><h3>🔄 Доработка:</h3>
+        $mailContent .= "<hr><h3>🔄 Комментарий юриста к доработке:</h3>
                          <p><strong>Комментарий:</strong> {$revision_comment}</p>";
     }
 
-    $mailContent .= "<hr><p><strong>Приложенные файлы:</strong></p><ul>";
+    $mailContent .= "<hr><p><strong>Приложенные файлы помощника:</strong></p><ul>";
 
     // Прикрепленные файлы
     foreach ($_FILES as $file) {
@@ -153,29 +137,20 @@ try {
 
     // Обновление статуса заявки в БД
     if ($is_revision) {
-        // Если заявка отправлена на доработку
+        // Если есть комментарий на доработку → фиксируем `revision_completed_at`
         $stmt = $conn->prepare("
             UPDATE form_submissions 
             SET revision_comment = ?, 
-                revision_files = ?, 
                 revision_completed_at = NOW(), 
                 visible_to_assistant = 0, 
                 resolved = 1
             WHERE id = ?
         ");
-        error_log("📌 Готовим SQL-запрос на обновление revision_completed_at для заявки ID {$submission_id}");
-
-        $revision_files_json = json_encode($revision_files, JSON_UNESCAPED_UNICODE);
-        $stmt->bind_param("ssi", $revision_comment, $revision_files_json, $submission_id);
-
-       if ($stmt->execute()) {
-        error_log("✅ Заявка ID {$submission_id} успешно решена.");
+        $stmt->bind_param("si", $revision_comment, $submission_id);
+        $stmt->execute();
+        error_log("✅ Заявка ID {$submission_id} отмечена как доработка.");
     } else {
-        error_log("❌ Ошибка при обновлении заявки ID {$submission_id}: " . $stmt->error);
-    }
-        error_log("🔄 Заявка ID {$submission_id} доработана и закрыта.");
-    } else {
-        // Если заявка решена в первый раз
+        // Если нет комментария → просто закрываем заявку
         $stmt = $conn->prepare("
             UPDATE form_submissions 
             SET resolved = 1, 
