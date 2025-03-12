@@ -165,7 +165,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </html>
 ";
         // Добавление Word-документа как вложения
-        $mail->addStringAttachment($wordContent, 'Копия_' . $surname . '.doc', 'base64', 'application/msword');
+        $mail->addStringAttachment($wordContent, 'Онлайн заявка по средствам интернет_' . $surname . '.doc', 'base64', 'application/msword');
 
 
 
