@@ -10,7 +10,7 @@
           Все заявки
         </button>
         <button class="tab-button" :class="{ active: activeTab === 'deleted' }" @click="activeTab = 'deleted'">
-          Удаленные заявки
+          Выполненные заявки
         </button>
         <button class="tab-button" :class="{ active: activeTab === 'assistant' }" @click="switchTab('assistant')">
           Заявки отправленные помощнику
@@ -52,7 +52,7 @@
               </ul>
             </td>
             <td>
-              <button class="delete-button" @click="deleteSubmission(submission.id)">Удалить</button>
+              <button class="delete-button" @click="deleteSubmission(submission.id)">Выполнить задачу</button>
             </td>
             <td>
               <button class="share-button" :disabled="submission.visible_to_assistant"
@@ -86,9 +86,9 @@
           :disabled="currentPage[activeTab] === totalPages[activeTab]">»</button>
       </div>
     </div>
-    <!-- Таблица для удаленных заявок -->
+    <!-- Таблица для Выполненные заявок -->
     <div v-if="activeTab === 'deleted'">
-      <h2>Удаленные заявки</h2>
+      <h2>Выполненные заявки</h2>
       <table class="submissions-table" v-if="deletedSubmissions.length > 0">
         <thead>
           <tr>
@@ -120,7 +120,7 @@
           </tr>
         </tbody>
       </table>
-      <p v-else>Нет удаленных заявок.</p>
+      <p v-else>Нет выполненных заявок.</p>
       <div class="pagination">
         <!-- Кнопка "Первая страница" -->
         <button @click="changePage(activeTab, 1)" :disabled="currentPage[activeTab] === 1">«</button>
@@ -328,6 +328,13 @@
 
 
   </div>
+<!-- Модальное окно ожидания -->
+<div v-if="isSharing" class="blocking-modal">
+  <div class="modal-content center-text">
+    <div class="spinner"></div>
+    <p>⏳ Подождите пожалуйста, файлы отправляются...</p>
+  </div>
+</div>
 
 </template>
 
@@ -342,6 +349,7 @@ export default {
       assistantSubmissions: [],
       resolvedSubmissions: [],
       
+      isSharing: false,
 
       showModal: false,
       fullProblemText: '',
@@ -519,28 +527,32 @@ export default {
 
 
     async shareWithAssistant(id) {
-      try {
-        console.log('Отправка заявки помощнику с ID:', id);
-        const response = await fetch(`/share_with_assistant.php`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ id })
-        });
+  try {
+    this.isSharing = true; // Показать модалку
+    const response = await fetch(`/share_with_assistant.php`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id })
+    });
 
-        const data = await response.json();
-        if (data.success) {
-          console.log('Заявка успешно отправлена помощнику.');
-          this.fetchSubmissions(); // Обновление данных
-        } else {
-          console.error('Ошибка при передаче заявки помощнику:', data.message);
-        }
-      } catch (error) {
-        console.error('Ошибка связи с сервером при передаче заявки помощнику:', error);
-      }
-    },
+    const data = await response.json();
+    if (data.success) {
+      alert('Заявка успешно отправлена помощнику.');
+      this.fetchSubmissions(); // Обновить список
+    } else {
+      alert('Ошибка: ' + data.message);
+    }
+  } catch (error) {
+    console.error('Ошибка при отправке:', error);
+    alert('Произошла ошибка при отправке.');
+  } finally {
+    this.isSharing = false; // Скрыть модалку
+  }
+}
+,
     async returnSubmission(id) {
       try {
         console.log('Возврат заявки с ID:', id);
@@ -1040,13 +1052,13 @@ p {
   padding: 5px 10px;
   border: none;
   border-radius: 5px;
-  background-color: #d9534f;
+  background-color: #061842;
   color: white;
   cursor: pointer;
 }
 
 .delete-button:hover {
-  background-color: #c9302c;
+  background-color: #07266e;
 }
 
 
@@ -1269,5 +1281,38 @@ p {
   color: white;
   padding: 10px;
   text-align: center;
+}
+.blocking-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.center-text {
+  text-align: center;
+  color: #fff;
+  font-size: 18px;
+}
+
+.spinner {
+  margin: 0 auto 20px auto;
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #ffffff; 
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 </style>
