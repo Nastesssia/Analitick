@@ -1,10 +1,9 @@
-<?php
-
+<?php 
 /**
  * Database config variables
  */
-define("DB_HOST", "localhost");
-define("DB_USER", "u2615238_Alex");
-define("DB_PASSWORD", "zO0oO9iA4mcB1fZ9");
-define("DB_DATABASE", "u2615238_Analitik");
+define("DB_HOST", "localhost"); // или 127.0.0.1
+define("DB_USER", "u3143787_default");
+define("DB_PASSWORD", "vK4hL4cX2nxY5gY4");
+define("DB_DATABASE", "u3143787_default");
 ?>

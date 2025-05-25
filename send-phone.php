@@ -1,6 +1,6 @@
 <?php
 ini_set("log_errors", 1);
-ini_set("error_log", "/home/ana6087438/analitikgroup.ru/docs/php_errors.log");
+ini_set("error_log", __DIR__ . "/php_errors.log");
 
 require 'vendor/autoload.php';
 use PHPMailer\PHPMailer\PHPMailer;

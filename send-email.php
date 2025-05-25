@@ -1,6 +1,18 @@
 <?php
+// Разрешаем CORS для запроса с сайта
+header("Access-Control-Allow-Origin: https://www.analitikgroup.ru");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Access-Control-Allow-Credentials: true");
+
+// Если OPTIONS-запрос (preflight CORS), просто завершаем выполнение
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 ini_set("log_errors", 1);
-ini_set("error_log", "/home/ana6087438/analitikgroup.ru/docs/php_errors.log");
+ini_set("error_log", __DIR__ . "/php_errors.log");
+
 
 require 'vendor/autoload.php';
 require_once 'DB_Functions.php';
@@ -17,7 +29,8 @@ $db = new DB_Functions();
 function getGoogleClient()
 {
     $client = new Client();
-    $client->setAuthConfig('/home/ana6087438/analitikgroup.ru/docs/credentials.json');
+    $client->setAuthConfig(__DIR__ . '/credentials.json');
+
     $client->addScope(Drive::DRIVE_FILE);
     $client->setAccessType('offline');
     return $client;
@@ -42,11 +55,8 @@ function uploadFileToDrive($filePath, $fileName, $parentFolderId = null)
         'fields' => 'id'
     ]);
 
-    $driveService->permissions->create($file->id, new Drive\Permission([
-        'type' => 'user',
-        'role' => 'reader',
-        'emailAddress' => 'i@aleksandr-kabanov.ru' 
-    ]));
+
+
 
     return "https://drive.google.com/file/d/" . $file->id . "/view";
 }
