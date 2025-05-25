@@ -12,9 +12,9 @@
             <p>ЮРИДИЧЕСКОЕ БЮРО</p>
             <span class="red-letter">А</span><span class="bold-text">налитик</span><span class="red-letter">Г</span><span class="bold-text">рупп в</span>
             <!-- Обернули картинку в ссылку -->
-            <a href="https://dzen.ru/id/6176836168f1103f5fa901e3" target="_blank">
-              <img src="@/assets/forClientAcc/dark-logo.svg" alt="Logo" />
-            </a>
+      <div class="logo-container" @click="goToDzen">
+    <img src="@/assets/forClientAcc/dark-logo.svg" alt="Logo" />
+  </div>
           </div>
         </div>
       </div>
@@ -25,10 +25,31 @@
 <script>
 export default {
   name: "DzenView",
+  methods: {
+    goToDzen() {
+      window.open("https://dzen.ru/id/6176836168f1103f5fa901e3", "_blank");
+    }
+  }
 };
+
 </script>
 
 <style scoped>
+.logo-container {
+  display: inline-block;
+  cursor: pointer;
+}
+
+.logo-container img {
+  width: 6vw;
+  margin-left: 0.5vw;
+  transition: transform 0.3s ease;
+}
+
+.logo-container:hover img {
+  transform: scale(1.1);
+}
+
 .container {
   box-shadow: 0px 0.5vw 2.5vw rgba(0, 0, 0, 0.3); /* Пропорциональная тень */
   height: 20vw;

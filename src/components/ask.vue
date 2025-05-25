@@ -135,6 +135,7 @@
       <p>{{ alert.message }}</p>
     </div>
   </div>
+  
 </template>
 
 <script>
