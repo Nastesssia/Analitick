@@ -1,11 +1,18 @@
 <?php
-// Разрешаем CORS для запроса с сайта
-header("Access-Control-Allow-Origin: https://www.analitikgroup.ru");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-header("Access-Control-Allow-Credentials: true");
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
-// Если OPTIONS-запрос (preflight CORS), просто завершаем выполнение
+$allowedOrigins = [
+    'https://analitikgroup.ru',
+    'https://www.analitikgroup.ru'
+];
+
+if (in_array($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: $origin");
+    header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization");
+    header("Access-Control-Allow-Credentials: true");
+}
+
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     http_response_code(200);
     exit();
