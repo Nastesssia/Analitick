@@ -205,11 +205,43 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Отправляем письмо юристу
         $mail->send();
 
-        // Отправляем копию пользователю
-        $mail->clearAddresses();
-        $mail->addAddress($email, $name);
-        $mail->Subject = "Копия Вашей заявки с сайта АналитикГрупп";
-        $mail->send();
+// Отправляем копию письма пользователю, который оставил заявку
+$mail->clearAllRecipients();
+$mail->addAddress($email);
+$mail->setFrom('i@aleksandr-kabanov.ru', 'АналитикГрупп');
+$mail->Subject = "Копия вашей заявки с сайта АналитикГрупп";
+
+$htmlBody = "
+    <h3>Спасибо за вашу заявку на сайте <a href='http://analitikgroup.ru/'>analitikgroup.ru</a></h3>
+    <p>Мы получили вашу заявку со следующими данными:</p>
+    <p><strong>Фамилия:</strong> $surname</p>
+    <p><strong>Имя:</strong> $name</p>
+    <p><strong>Отчество:</strong> $patronymic</p>
+    <p><strong>Телефон:</strong> $phone</p>
+    <p><strong>Email:</strong> $email</p>
+    <p><strong>Проблема:</strong> $problem</p>
+    <p>В ближайшее время с вами свяжутся.</p>
+    <hr>
+    <p><em>Это письмо создано автоматически. Не отвечайте на него.</em></p>
+";
+
+$textBody = "Спасибо за вашу заявку на сайте analitikgroup.ru\n\n"
+    . "Фамилия: $surname\n"
+    . "Имя: $name\n"
+    . "Отчество: $patronymic\n"
+    . "Телефон: $phone\n"
+    . "Email: $email\n"
+    . "Проблема: $problem\n\n"
+    . "В ближайшее время с вами свяжутся.\n"
+    . "---\n"
+    . "Это письмо создано автоматически. Не отвечайте на него.";
+
+$mail->isHTML(true);
+$mail->Body = $htmlBody;
+$mail->AltBody = $textBody;
+
+$mail->send();
+
 
         // Отправляем копию на почту Analitik Grupp
         $mail->clearAddresses();
