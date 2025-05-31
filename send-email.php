@@ -229,10 +229,15 @@ $htmlBody = "
     <p><strong>Email:</strong> $email</p>
     <p><strong>Проблема:</strong> $problem</p>
     <p>В ближайшее время с вами свяжутся.</p>
+    <p><strong>Файлы, которые вы отправили:</strong></p>
+<ul>" . implode("\n", $fileNames) . "</ul>
     <hr>
     <p><em>Это письмо создано автоматически. Не отвечайте на него.</em></p>
 ";
-
+$fileListText = "";
+foreach ($fileLinks as $file) {
+    $fileListText .= "- " . $file['name'] . "\n";
+}
 $textBody = "Спасибо за вашу заявку на сайте analitikgroup.ru\n\n"
     . "Фамилия: $surname\n"
     . "Имя: $name\n"
@@ -240,6 +245,8 @@ $textBody = "Спасибо за вашу заявку на сайте analitikg
     . "Телефон: $phone\n"
     . "Email: $email\n"
     . "Проблема: $problem\n\n"
+       . "Файлы, которые вы отправили:\n"
+    . $fileListText . "\n"
     . "В ближайшее время с вами свяжутся.\n"
     . "---\n"
     . "Это письмо создано автоматически. Не отвечайте на него.";
