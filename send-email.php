@@ -214,6 +214,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 // Отправляем копию письма пользователю, который оставил заявку
 $mail->clearAllRecipients();
+$mail->clearAttachments();  // <-- Очищаем вложения
 $mail->addAddress($email);
 $mail->setFrom('i@aleksandr-kabanov.ru', 'АналитикГрупп');
 $mail->Subject = "Копия вашей заявки с сайта АналитикГрупп";
