@@ -31,16 +31,23 @@
     </div>
 
     <div class="politic">
-      <!-- Добавляем блок с информацией слева -->
+      <!-- Блок с информацией об организации -->
+      <div class="extra-info">
+        <p>ООО Юридическое Бюро «АналитикГрупп» <br>ИНН 7842456478
+          <br> 236003, Калининградская обл., г. Калининград,
+          <br>ул. Дачная, д. 8, апарт 6
+        </p>
 
+      </div>
 
       <!-- Существующий контент с копирайтом и ссылками -->
       <div class="copyright">
-        <p>copyright © 2011-2024. все права защищены</p>
-        <a class="konf" href="politic.html">политика конфиденциальности</a>
-        <a class="freepik" href="https://ru.freepik.com/">Изображения взяты с Freepik</a>
+        <p>COPYRIGHT © 2011-2024. <br> ВСЕ ПРАВА ЗАЩИЩЕНЫ</p> <br>
+        <a class="konf" href="politic.html">ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ</a><br>
+        <a class="freepik" href="https://ru.freepik.com/">ИЗОБРАЖЕНИЯ ВЗЯТЫ С FREEPIK</a>
       </div>
     </div>
+
   </footer>
 </template>
 
@@ -169,6 +176,13 @@ export default {
   /* анимация при изменении цвета текста */
 }
 
+.copyright  {
+ text-align: right;
+}
+.copyright p {
+  margin: 0;
+}
+
 .href a:hover {
   color: #970E0E;
   /* изменение цвета текста при наведении */
@@ -221,9 +235,6 @@ footer {
 .politic p {
   font-size: 1vw;
   color: rgba(255, 255, 255, 0.5);
-  text-transform: uppercase;
-  padding: 0;
-  margin: 0;
 }
 
 .konf {
@@ -239,13 +250,13 @@ footer {
 
 .politic {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
+  justify-content: space-between; /* развести блоки по краям */
+  align-items: center;           /* выровнять по вертикали */
   background-color: #363636;
-  height: 90px;
-  padding: 0;
+  padding-left: 100px;
+  padding-right: 100px;
 }
+
 
 .freepik {
   color: rgba(255, 255, 255, 0.5);
@@ -280,13 +291,11 @@ input {
   /* анимация при изменении цвета фона и текста */
 }
 
-.copyright {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  color: rgba(255, 255, 255, 0.5);
-  text-transform: uppercase;
-}
+
+
+ .extra-info p{
+   margin: 0;
+  }
 
 .push button:hover {
   background-color: white;
@@ -303,22 +312,8 @@ input {
   padding-left: 10px;
 }
 
-.extra-info {
-  display: flex;
-  flex-direction: column;
-  position: absolute;
-  left: 20px;
-  align-self: center;
-  justify-content: center;
-}
 
-.extra-info p {
-  color: white;
-  font-size: 1vw;
-  text-align: center;
-  margin: 0;
 
-}
 
 .paraweb-logo {
   margin-top: 5px;
@@ -441,109 +436,35 @@ input {
     width: 75px;
     font-size: 10px;
   }
-}
-
-@media (min-width: 859px) and (max-width: 1480px) {
-  footer img {
-    width: 35%;
-    height: auto;
-    margin-bottom: 40px;
-    margin-top: 30px;
+  .politic {
+    padding: 20px;            /* отступы */
+    height: auto;             /* убираем фиксированную высоту */
   }
 
-  .footer-info {
-    flex-direction: column;
-    align-items: center;
+  .extra-info {
+    margin-bottom: 15px;
   }
 
-  .link {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 20px;
+  .extra-info p {
+    font-size: 3vw;           /* текст чуть крупнее */
+    line-height: 1.4;
+    width: 100px;
+    margin: 0;
+    padding: 0;
   }
 
-  .href {
-    margin-top: 5px;
-    margin-left: 0;
+  .copyright {
   }
 
-  .href a {
-    margin-top: 5px;
-    margin-right: 50px;
-    color: white;
-    text-decoration: none;
-    transition: color 0.3s;
-    font-size: 2vw;
-    /* анимация при изменении цвета текста */
-  }
-
-  .icons img {
-    margin-top: 30px;
-    /* Уменьшаем отступ сверху */
-    cursor: pointer;
-    height: auto;
-    width: 130%;
-    /* Увеличиваем ширину иконок */
-    margin-right: 0;
-    transition: transform 0.3s;
-  }
-
-  .icons a {
-    margin-right: 20px;
-    margin-left: 20px;
-  }
-
-  .icons {
-    display: flex;
-    justify-content: center;
-  }
-
-  .numbers {
-    margin-top: 0;
-    margin-left: 40px;
-  }
-
-  .push {
-    margin-top: 40px;
-    margin-right: 0;
-    margin-left: 0;
-  }
-
-  .push h2 {
-    font-size: 2.1vw;
-  }
-
-  input {
-    border-radius: 5px;
-    height: 60px;
-    width: 250px;
-    font-size: 1.5vw;
+  .copyright p {
+    font-size: 3vw;
   }
 
   .politic a {
-    font-size: 1.5vw;
-  }
-
-  .politic p {
-    font-size: 1.5vw;
-  }
-
-  .politic {
-    height: 120px;
-    bottom: 0;
-    width: 100%;
-  }
-
-  .numbers a {
-    font-size: 2vw;
-  }
-
-  .push button {
-    height: 60px;
-    width: 145px;
-    font-size: 1.5vw;
+    display: block;           /* каждую ссылку с новой строки */
+    font-size: 2.5vw;
   }
 }
+
+
 </style>
