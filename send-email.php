@@ -1,6 +1,9 @@
 <?php
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
+
+
+
 $allowedOrigins = [
     'https://analitikgroup.ru',
     'https://www.analitikgroup.ru'
@@ -22,6 +25,7 @@ ini_set("error_log", __DIR__ . "/php_errors.log");
 
 
 require 'vendor/autoload.php';
+use PhpOffice\PhpWord\TemplateProcessor;
 require_once 'DB_Functions.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -91,12 +95,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $linkExtensions = ['7z', 'zip', 'rar'];
     $mail = new PHPMailer(true);
 
-    
+
     if (!empty($_FILES['files']['name'][0])) {
         foreach ($_FILES['files']['tmp_name'] as $i => $fileTmpPath) {
             $fileName = $_FILES['files']['name'][$i];
             $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-    
+
             if (is_uploaded_file($fileTmpPath)) {
                 // Загружаем файл на Google Drive и получаем ссылку
                 $link = uploadFileToDrive($fileTmpPath, $fileName, $parentFolderId);
@@ -106,7 +110,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         'url' => $link,
                         'name' => $fileName
                     ]; // Сохраняем ссылку и название файла в базу данных
-    
+
                     // В письме: ссылки только для архивов, остальные - как вложения
                     if (in_array($fileExtension, $linkExtensions)) {
                         $fileNames[] = "<li><a href='$link' target='_blank'>$fileName</a></li>";
@@ -118,8 +122,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         }
     }
-    
-    
+
+
     $fileLinksJson = json_encode($fileLinks);
     error_log("JSON ссылок на файлы: " . $fileLinksJson);
     // Сохранение данных в базу данных
@@ -134,6 +138,54 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
     error_log("Перед отправкой письма. Ссылки на файлы: " . $fileLinksJson);
     try {
+
+
+        $templatePath = __DIR__ . '/Фирменный бланк АналитикГрупп.docx';
+
+        if (file_exists($templatePath)) {
+            // --- Дата и время поступления заявки ---
+            $dateNow = new DateTime('now', new DateTimeZone('Europe/Kaliningrad'));
+            $ДатаПоступления = $dateNow->format('d.m.Y');          // пример: 19.10.2025
+            $ДатаПоступленияВремяВчасах = $dateNow->format('H-i'); // пример: 16-22
+
+            $template = new TemplateProcessor($templatePath);
+            $template->setValue('Фамилия', $surname);
+            $template->setValue('Имя', $name);
+            $template->setValue('Отчество', $patronymic);
+            $template->setValue('Телефон', $phone);
+            $template->setValue('Почта', $email);
+            $template->setValue('ДатаПоступления', $ДатаПоступления);
+            $template->setValue('ДатаПоступленияВремяВчасах', $ДатаПоступленияВремяВчасах);
+
+            // Переносим длинный текст каждые 100 символов, чтобы Word не растягивал строку
+            $wrappedProblem = wordwrap($problem, 100, "\n", true);
+            $template->setValue('ОписаниеПроблемы', htmlspecialchars($wrappedProblem));
+
+
+            // --- Красивый список файлов без ссылок, с точками и переносом ---
+            $fileText = '';
+
+            if (!empty($fileLinks)) {
+                foreach ($fileLinks as $file) {
+                    // Каждая строка с точкой и именем файла
+                    $fileText .= "• " . $file['name'] . "\n";
+                }
+                // Перенос строк каждые 120 символов на всякий случай
+                $fileText = wordwrap($fileText, 120, "\n", true);
+            } else {
+                $fileText = 'Файлы не приложены';
+            }
+
+            $template->setValue('Файлы', htmlspecialchars($fileText));
+
+
+
+            // Сохраняем готовый файл (во временную папку)
+            $generatedDocPath = __DIR__ . '/Ответ_' . $surname . '.docx';
+            $template->saveAs($generatedDocPath);
+        }
+
+
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
@@ -145,9 +197,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         $mail->setFrom('i@aleksandr-kabanov.ru', $email);
         $mail->addAddress('i@aleksandr-kabanov.ru', 'Юрист');
+        // Прикладываем фирменный Word-документ только юристу
+        if (isset($generatedDocPath) && file_exists($generatedDocPath)) {
+            $mail->addAttachment($generatedDocPath);
+        }
         $mail->addReplyTo($email, $email);
 
-     
+
         // Создание содержимого Word "на лету"
         $wordContent = "
 <!DOCTYPE html>
@@ -211,15 +267,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Отправляем письмо юристу
         $mail->send();
+        // === Удаляем временный Word-файл после отправки ===
+        if (isset($generatedDocPath) && file_exists($generatedDocPath)) {
+            unlink($generatedDocPath);
+        }
 
-// Отправляем копию письма пользователю, который оставил заявку
-$mail->clearAllRecipients();
-$mail->clearAttachments();  // <-- Очищаем вложения
-$mail->addAddress($email);
-$mail->setFrom('i@aleksandr-kabanov.ru', 'АналитикГрупп');
-$mail->Subject = "Копия вашей заявки с сайта АналитикГрупп";
+        // Отправляем копию на почту Analitik Grupp
+        $mail->clearAddresses();
+        $mail->addAddress('analitikgrupp@gmail.com', 'АналитикГрупп');
+        $mail->Subject = "Копия заявки с сайта";
+        $mail->send();
 
-$htmlBody = "
+        // Отправляем копию письма пользователю, который оставил заявку
+        $mail->clearAllRecipients();
+        $mail->clearAttachments();  // <-- Очищаем вложения
+        $mail->addAddress($email);
+        $mail->setFrom('i@aleksandr-kabanov.ru', 'АналитикГрупп');
+        $mail->Subject = "Копия вашей заявки с сайта АналитикГрупп";
+
+        $htmlBody = "
     <h3>Спасибо за вашу заявку на сайте <a href='http://analitikgroup.ru/'>analitikgroup.ru</a></h3>
     <p>Мы получили вашу заявку со следующими данными:</p>
     <p><strong>Фамилия:</strong> $surname</p>
@@ -234,35 +300,30 @@ $htmlBody = "
     <hr>
     <p><em>Это письмо создано автоматически. Не отвечайте на него.</em></p>
 ";
-$fileListText = "";
-foreach ($fileLinks as $file) {
-    $fileListText .= "- " . $file['name'] . "\n";
-}
-$textBody = "Спасибо за вашу заявку на сайте analitikgroup.ru\n\n"
-    . "Фамилия: $surname\n"
-    . "Имя: $name\n"
-    . "Отчество: $patronymic\n"
-    . "Телефон: $phone\n"
-    . "Email: $email\n"
-    . "Проблема: $problem\n\n"
-       . "Файлы, которые вы отправили:\n"
-    . $fileListText . "\n"
-    . "В ближайшее время с вами свяжутся.\n"
-    . "---\n"
-    . "Это письмо создано автоматически. Не отвечайте на него.";
+        $fileListText = "";
+        foreach ($fileLinks as $file) {
+            $fileListText .= "- " . $file['name'] . "\n";
+        }
+        $textBody = "Спасибо за вашу заявку на сайте analitikgroup.ru\n\n"
+            . "Фамилия: $surname\n"
+            . "Имя: $name\n"
+            . "Отчество: $patronymic\n"
+            . "Телефон: $phone\n"
+            . "Email: $email\n"
+            . "Проблема: $problem\n\n"
+            . "Файлы, которые вы отправили:\n"
+            . $fileListText . "\n"
+            . "В ближайшее время с вами свяжутся.\n"
+            . "---\n"
+            . "Это письмо создано автоматически. Не отвечайте на него.";
 
-$mail->isHTML(true);
-$mail->Body = $htmlBody;
-$mail->AltBody = $textBody;
+        $mail->isHTML(true);
+        $mail->Body = $htmlBody;
+        $mail->AltBody = $textBody;
 
-$mail->send();
-
-
-        // Отправляем копию на почту Analitik Grupp
-        $mail->clearAddresses();
-        $mail->addAddress('analitikgrupp@gmail.com', 'АналитикГрупп');
-        $mail->Subject = "Копия заявки с сайта";
         $mail->send();
+
+
 
         $response['status'] = 'success';
         $response['message'] = 'Спасибо! Ваше сообщение было отправлено.';

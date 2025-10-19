@@ -3,6 +3,7 @@
         "phpmailer/phpmailer": "^6.9",
         "vlucas/phpdotenv": "^5.3",
         "google/apiclient": "^2.18",
-        "google/apiclient-services": "^0.395.0"
+        "google/apiclient-services": "^0.395.0",
+        "phpoffice/phpword": "^1.3"
     }
 }
