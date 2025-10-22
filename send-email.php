@@ -267,16 +267,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Отправляем письмо юристу
         $mail->send();
-        // === Удаляем временный Word-файл после отправки ===
-        if (isset($generatedDocPath) && file_exists($generatedDocPath)) {
-            unlink($generatedDocPath);
-        }
 
         // Отправляем копию на почту Analitik Grupp
         $mail->clearAddresses();
         $mail->addAddress('analitikgrupp@gmail.com', 'АналитикГрупп');
         $mail->Subject = "Копия заявки с сайта";
         $mail->send();
+
 
         // Отправляем копию письма пользователю, который оставил заявку
         $mail->clearAllRecipients();
@@ -322,8 +319,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $mail->AltBody = $textBody;
 
         $mail->send();
-
-
+        // === Удаляем временный Word-файл ТОЛЬКО ПОСЛЕ ВСЕХ ПИСЕМ ===
+        if (isset($generatedDocPath) && file_exists($generatedDocPath)) {
+            unlink($generatedDocPath);
+        }
 
         $response['status'] = 'success';
         $response['message'] = 'Спасибо! Ваше сообщение было отправлено.';
