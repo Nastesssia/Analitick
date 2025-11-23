@@ -139,14 +139,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     error_log("Перед отправкой письма. Ссылки на файлы: " . $fileLinksJson);
     try {
 
-
         $templatePath = __DIR__ . '/Фирменный бланк АналитикГрупп.docx';
 
         if (file_exists($templatePath)) {
             // --- Дата и время поступления заявки ---
             $dateNow = new DateTime('now', new DateTimeZone('Europe/Kaliningrad'));
-            $ДатаПоступления = $dateNow->format('d.m.Y');          // пример: 19.10.2025
-            $ДатаПоступленияВремяВчасах = $dateNow->format('H-i'); // пример: 16-22
+            $ДатаПоступления = $dateNow->format('d.m.Y');
+            $ДатаПоступленияВремяВчасах = $dateNow->format('H-i');
 
             $template = new TemplateProcessor($templatePath);
             $template->setValue('Фамилия', $surname);
@@ -157,146 +156,60 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $template->setValue('ДатаПоступления', $ДатаПоступления);
             $template->setValue('ДатаПоступленияВремяВчасах', $ДатаПоступленияВремяВчасах);
 
-            // Переносим длинный текст каждые 100 символов, чтобы Word не растягивал строку
             $wrappedProblem = wordwrap($problem, 100, "\n", true);
             $template->setValue('ОписаниеПроблемы', htmlspecialchars($wrappedProblem));
 
-
-            // --- Красивый список файлов без ссылок, с точками и переносом ---
             $fileText = '';
-
             if (!empty($fileLinks)) {
                 foreach ($fileLinks as $file) {
-                    // Каждая строка с точкой и именем файла
                     $fileText .= "• " . $file['name'] . "\n";
                 }
-                // Перенос строк каждые 120 символов на всякий случай
                 $fileText = wordwrap($fileText, 120, "\n", true);
             } else {
                 $fileText = 'Файлы не приложены';
             }
-
             $template->setValue('Файлы', htmlspecialchars($fileText));
 
-
-
-            // Сохраняем готовый файл (во временную папку)
             $generatedDocPath = __DIR__ . '/Ответ_' . $surname . '.docx';
             $template->saveAs($generatedDocPath);
         }
 
+        // ------- общий HTML для юриста и копии -------
+        $mainHtmlBody = "
+        <h3 style='margin-bottom: 10px;'>Заполнена заявка на сайте <a href='http://analitikgroup.ru/'>analitikgroup.ru</a></h3>
+        <hr style='border: 1px solid #970E0E; margin-bottom: 10px;'>
+        <p style='margin: 4px 0;'><strong>Фамилия:</strong> $surname</p>
+        <p style='margin: 4px 0;'><strong>Имя:</strong> $name</p>
+        <p style='margin: 4px 0;'><strong>Отчество:</strong> $patronymic</p>
+        <p style='margin: 4px 0;'><strong>Телефон:</strong> $phone</p>
+        <p style='margin: 4px 0;'><strong>Email:</strong> $email</p>
+        <p style='margin: 4px 0;'><strong>Проблема:</strong> $problem</p>
+        <hr style='border: 1px solid #970E0E; margin-top: 10px;'>
+        <p style='margin: 4px 0;'><strong>Файлы:</strong></p>
+        <ul>" . implode("\n", $fileNames) . "</ul>
+        <hr style='border: 1px solid #970E0E; margin-top: 10px;'>
+        <p>Я, <strong>$surname $name $patronymic</strong>, выражаю согласие на передачу и обработку персональных данных.</p>
+        <p><strong>Отправлено с IP адреса:</strong> " . $_SERVER['REMOTE_ADDR'] . "</p>
+        <p><em>Внимание! Это сообщение создается автоматически! Не отвечайте на него с помощью кнопки 'ответить (reply)'. Для связи с автором используйте контактные данные, указанные в теле письма.</em></p>
+    ";
 
-        $mail->isSMTP();
-        $mail->Host = 'smtp.gmail.com';
-        $mail->SMTPAuth = true;
-        $mail->Username = 'analitikgrupp@gmail.com';
-        $mail->Password = 'rhkt eykw wrrk fevo';
-        $mail->SMTPSecure = 'ssl';
-        $mail->Port = 465;
-        $mail->CharSet = 'UTF-8';
-
-        $mail->setFrom('i@aleksandr-kabanov.ru', $email);
-        $mail->addAddress('i@aleksandr-kabanov.ru', 'Юрист');
-        // Прикладываем фирменный Word-документ только юристу
-        if (isset($generatedDocPath) && file_exists($generatedDocPath)) {
-            $mail->addAttachment($generatedDocPath);
-        }
-        $mail->addReplyTo($email, $email);
-
-
-        // Создание содержимого Word "на лету"
-        $wordContent = "
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset='UTF-8'>
-    <title>Заявка с сайта АналитикГрупп</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        h3 { color: #970E0E; }
-        p, li { margin: 5px 0; }
-        hr { border: 1px solid #970E0E; margin: 10px 0; }
-    </style>
-</head>
-<body>
-    <h3>Заявка на сайте <a href='http://analitikgroup.ru/'>analitikgroup.ru</a></h3>
-    <hr>
-    <p><strong>Фамилия:</strong> $surname</p>
-    <p><strong>Имя:</strong> $name</p>
-    <p><strong>Отчество:</strong> $patronymic</p>
-    <p><strong>Телефон:</strong> $phone</p>
-    <p><strong>Email:</strong> $email</p>
-    <p><strong>Проблема:</strong> $problem</p>
-    <hr>
-    <p><strong>Файлы:</strong></p>
-    <ul>" . implode("\n", $fileNames) . "</ul>
-    <hr>
-    <p>Я, <strong>$surname $name $patronymic</strong>, выражаю согласие на передачу и обработку персональных данных.</p>
-    <p><strong>Отправлено с IP адреса:</strong> " . $_SERVER['REMOTE_ADDR'] . "</p>
-    <p><em>Внимание! Это сообщение создается автоматически! Не отвечайте на него с помощью кнопки 'ответить (reply)'. Для связи с автором используйте контактные данные, указанные в теле письма.</em></p>
-</body>
-</html>
-";
-        // Добавление Word-документа как вложения
-        $mail->addStringAttachment($wordContent, 'Онлайн заявка по средствам интернет_' . $surname . '.doc', 'base64', 'application/msword');
-
-
-
-
-        $mail->isHTML(true);
-        $mail->Subject = "Новая заявка с вашего сайта";
-        $mail->Body = "
-                      <h3 style='margin-bottom: 10px;'>Заполнена заявка на сайте <a href='http://analitikgroup.ru/'>analitikgroup.ru</a></h3>
-                      <hr style='border: 1px solid #970E0E; margin-bottom: 10px;'>
-                      <p style='margin: 4px 0;'><strong>Фамилия:</strong> $surname</p>
-                      <p style='margin: 4px 0;'><strong>Имя:</strong> $name</p>
-                      <p style='margin: 4px 0;'><strong>Отчество:</strong> $patronymic</p>
-                      <p style='margin: 4px 0;'><strong>Телефон:</strong> $phone</p>
-                      <p style='margin: 4px 0;'><strong>Email:</strong> $email</p>
-                      <p style='margin: 4px 0;'><strong>Проблема:</strong> $problem</p>
-                      <hr style='border: 1px solid #970E0E; margin-top: 10px;'>
-                      <p style='margin: 4px 0;'><strong>Файлы:</strong></p>
-                       <ul>"
-            . implode("\n", $fileNames) .
-            "</ul>
-                      <hr style='border: 1px solid #970E0E; margin-top: 10px;'>
-                      <p>Я, <strong>$surname $name $patronymic</strong>, выражаю согласие на передачу и обработку персональных данных.</p>
-                      <p><strong>Отправлено с IP адреса:</strong> " . $_SERVER['REMOTE_ADDR'] . "</p>
-                      <p><em>Внимание! Это сообщение создается автоматически! Не отвечайте на него с помощью кнопки 'ответить (reply)'. Для связи с автором используйте контактные данные, указанные в теле письма.</em></p>
-                      ";
-
-        // Отправляем письмо юристу
-        $mail->send();
-
-        // Отправляем копию на почту Analitik Grupp
-        $mail->clearAddresses();
-        $mail->addAddress('analitikgrupp@gmail.com', 'АналитикГрупп');
-        $mail->Subject = "Копия заявки с сайта";
-        $mail->send();
-
-
-        // Отправляем копию письма пользователю, который оставил заявку
-        $mail->clearAllRecipients();
-        $mail->clearAttachments();  // <-- Очищаем вложения
-        $mail->addAddress($email);
-        $mail->setFrom('i@aleksandr-kabanov.ru', 'АналитикГрупп');
-        $mail->Subject = "Копия вашей заявки с сайта АналитикГрупп";
-
+        // ------- HTML и текст для клиента -------
         $htmlBody = "
-    <h3>Спасибо за вашу заявку на сайте <a href='http://analitikgroup.ru/'>analitikgroup.ru</a></h3>
-    <p>Мы получили вашу заявку со следующими данными:</p>
-    <p><strong>Фамилия:</strong> $surname</p>
-    <p><strong>Имя:</strong> $name</p>
-    <p><strong>Отчество:</strong> $patronymic</p>
-    <p><strong>Телефон:</strong> $phone</p>
-    <p><strong>Email:</strong> $email</p>
-    <p><strong>Проблема:</strong> $problem</p>
-    <p>В ближайшее время с вами свяжутся.</p>
-    <p><strong>Файлы, которые вы отправили:</strong></p>
-<ul>" . implode("\n", $fileNames) . "</ul>
-    <hr>
-    <p><em>Это письмо создано автоматически. Не отвечайте на него.</em></p>
-";
+        <h3>Спасибо за вашу заявку на сайте <a href='http://analitikgroup.ru/'>analitikgroup.ru</a></h3>
+        <p>Мы получили вашу заявку со следующими данными:</p>
+        <p><strong>Фамилия:</strong> $surname</p>
+        <p><strong>Имя:</strong> $name</p>
+        <p><strong>Отчество:</strong> $patronymic</p>
+        <p><strong>Телефон:</strong> $phone</p>
+        <p><strong>Email:</strong> $email</p>
+        <p><strong>Проблема:</strong> $problem</p>
+        <p>В ближайшее время с вами свяжутся.</p>
+        <p><strong>Файлы, которые вы отправили:</strong></p>
+        <ul>" . implode("\n", $fileNames) . "</ul>
+        <hr>
+        <p><em>Это письмо создано автоматически. Не отвечайте на него.</em></p>
+    ";
+
         $fileListText = "";
         foreach ($fileLinks as $file) {
             $fileListText .= "- " . $file['name'] . "\n";
@@ -314,19 +227,99 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             . "---\n"
             . "Это письмо создано автоматически. Не отвечайте на него.";
 
+        // ================================
+        // 1) ЮРИСТ — SMTP ЯНДЕКС
+        // ================================
+        $yandex = new PHPMailer(true);
+        $yandex->isSMTP();
+        $yandex->Host = 'smtp.yandex.ru';
+        $yandex->SMTPAuth = true;
+        $yandex->Username = 'alexander-kabanov@yandex.ru';
+        $yandex->Password = 'mtbhefenluxjicxg';
+        $yandex->SMTPSecure = 'ssl';
+        $yandex->Port = 465;
+        $yandex->CharSet = 'UTF-8';
+
+        $yandex->setFrom('alexander-kabanov@yandex.ru', $email);
+        $yandex->addAddress('i@aleksandr-kabanov.ru', 'Юрист');
+
+        if (isset($generatedDocPath) && file_exists($generatedDocPath)) {
+            $yandex->addAttachment($generatedDocPath);
+        }
+
+        // прикрепим файлы пользователя (как раньше к gmail)
+        if (!empty($_FILES['files']['name'][0])) {
+            foreach ($_FILES['files']['tmp_name'] as $i => $fileTmpPath) {
+                $fileNameAttach = $_FILES['files']['name'][$i];
+                $fileExtensionAttach = strtolower(pathinfo($fileNameAttach, PATHINFO_EXTENSION));
+                if (is_uploaded_file($fileTmpPath) && !in_array($fileExtensionAttach, $linkExtensions)) {
+                    $yandex->addAttachment($fileTmpPath, $fileNameAttach);
+                }
+            }
+        }
+
+        $yandex->isHTML(true);
+        $yandex->Subject = "Новая заявка с сайта";
+        $yandex->Body = $mainHtmlBody;
+        $yandex->send();
+
+        // ================================
+        // 2) GMAIL — КОПИЯ + КЛИЕНТ
+        // ================================
+        $mail->isSMTP();
+        $mail->Host = 'smtp.gmail.com';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'analitikgrupp@gmail.com';
+        $mail->Password = 'rhkt eykw wrrk fevo';
+        $mail->SMTPSecure = 'ssl';
+        $mail->Port = 465;
+        $mail->CharSet = 'UTF-8';
+
+        // общие настройки
+        $mail->setFrom('i@aleksandr-kabanov.ru', 'АналитикГрупп');
+        $mail->addReplyTo($email, $email);
+
+        // --- 2.1. Копия на analitikgrupp@gmail.com ---
+        $mail->clearAllRecipients();
+        $mail->addAddress('analitikgrupp@gmail.com', 'АналитикГрупп');
+
+        $mail->addStringAttachment(
+            $mainHtmlBody,
+            'Онлайн заявка по средствам интернет_' . $surname . '.doc',
+            'base64',
+            'application/msword'
+        );
+
+        $mail->isHTML(true);
+        $mail->Subject = "Копия заявки с сайта";
+        $mail->Body = $mainHtmlBody;
+        $mail->send();
+
+        // --- 2.2. Письмо клиенту ---
+        $mail->clearAllRecipients();
+        $mail->clearAttachments();
+        $mail->setFrom('i@aleksandr-kabanov.ru', 'АналитикГрупп');
+        $mail->addAddress($email);
+        $mail->addReplyTo('analitikgrupp@gmail.com', 'АналитикГрупп');
+        $mail->Subject = "Копия вашей заявки с сайта АналитикГрупп";
         $mail->isHTML(true);
         $mail->Body = $htmlBody;
         $mail->AltBody = $textBody;
-
         $mail->send();
-        // === Удаляем временный Word-файл ТОЛЬКО ПОСЛЕ ВСЕХ ПИСЕМ ===
+
         if (isset($generatedDocPath) && file_exists($generatedDocPath)) {
             unlink($generatedDocPath);
         }
 
         $response['status'] = 'success';
         $response['message'] = 'Спасибо! Ваше сообщение было отправлено.';
+
     } catch (Exception $e) {
+        // Удаляем временный файл, если он ещё остался
+        if (isset($generatedDocPath) && file_exists($generatedDocPath)) {
+            unlink($generatedDocPath);
+        }
+
         error_log('Ошибка отправки сообщения: ' . $mail->ErrorInfo);
         $response['status'] = 'error';
         $response['message'] = 'Ошибка отправки сообщения: ' . $mail->ErrorInfo;

@@ -4,88 +4,29 @@
   </div>
   <div id="ask" class="container">
     <div class="img-container">
-      <img
-        class="left-image"
-        src="/src/assets/section_ask/ask_me_img.jpg"
-        alt="image"
-        draggable="false"
-      />
+      <img class="left-image" src="/src/assets/section_ask/ask_me_img.jpg" alt="image" draggable="false" />
     </div>
     <div class="form-container">
       <h2>{{ formTitle }}</h2>
       <p class="form-container-description">{{ formDescription }}</p>
-      <div class="form">
-        <input
-          type="text"
-          :placeholder="surnamePlaceholder"
-          v-model="surname"
-          class="input-field"
-          required
-          maxlength="20"
-          autocomplete="family-name"
-        /><br />
-        <input
-          type="text"
-          :placeholder="namePlaceholder"
-          v-model="name"
-          class="input-field"
-          required
-          maxlength="20"
-          autocomplete="given-name"
-        /><br />
-        <input
-          type="text"
-          :placeholder="patronymicPlaceholder"
-          v-model="patronymic"
-          required
-          maxlength="20"
-          class="input-field"
-          autocomplete="additional-name"
-        /><br />
-        <input
-          type="text"
-          @input="formatPhone"
-          v-mask="'+7 (###) ###-####'"
-          v-model="phone"
-          :placeholder="phonePlaceholder"
-          required
-          maxlength="17"
-          class="input-field"
-          autocomplete="tel"
-        />
-        <input
-          type="text"
-          :placeholder="emailPlaceholder"
-          v-model="email"
-          required
-          maxlength="70"
-          class="input-field"
-          autocomplete="email"
-        /><br />
-        <textarea
-          type="text"
-          :placeholder="problemPlaceholder"
-          v-model="problem"
-          style="height: 100px"
-          class="input-field"
-          maxlength="5000"
-        ></textarea
-        ><br />
-        <input
-          type="file"
-          id="fileInput"
-          ref="fileInput"
-          multiple
-          style="display: none"
-          @change="handleFileUpload"
-        />
+      <form class="form" @submit.prevent="sendFormData" autocomplete="on">
+
+        <input type="text" name="family-name" :placeholder="surnamePlaceholder" v-model="surname" class="input-field"
+          required maxlength="20" autocomplete="family-name" /><br />
+        <input type="text" name="given-name" :placeholder="namePlaceholder" v-model="name" class="input-field" required
+          maxlength="20" autocomplete="given-name" /><br />
+        <input type="text" name="additional-name" :placeholder="patronymicPlaceholder" v-model="patronymic" required
+          maxlength="20" class="input-field" autocomplete="additional-name" /><br />
+        <input type="text" name="tel" @input="formatPhone" v-mask="'+7 (###) ###-####'" v-model="phone"
+          :placeholder="phonePlaceholder" required maxlength="17" class="input-field" autocomplete="tel" />
+        <input type="text" name="email" :placeholder="emailPlaceholder" v-model="email" required maxlength="70"
+          class="input-field" autocomplete="email" /><br />
+        <textarea type="text" :placeholder="problemPlaceholder" v-model="problem" style="height: 100px"
+          class="input-field" maxlength="5000"></textarea><br />
+        <input type="file" id="fileInput" ref="fileInput" multiple style="display: none" @change="handleFileUpload" />
         <div class="containerAddFile">
           <div class="file-list">
-            <div
-              v-for="(fileItem, index) in fileList"
-              :key="index"
-              class="file-list-item"
-            >
+            <div v-for="(fileItem, index) in fileList" :key="index" class="file-list-item">
               <div>
                 {{ fileItem.file.name }} ({{
                   (fileItem.file.size / 1024 / 1024).toFixed(2)
@@ -98,29 +39,20 @@
             </div>
           </div>
           <label for="fileInput" class="file-upload-label">
-            <img
-              src="@/assets/section_ask/plus.png"
-              alt="Выбрать файлы"
-              width="40"
-              height="40"
-            />
+            <img src="@/assets/section_ask/plus.png" alt="Выбрать файлы" width="40" height="40" />
             <p class="fileAttach">
               Прикрепить файл<br />(Не более 5 и до 25МБ)
             </p>
           </label>
-   
+
         </div>
-      </div>
+      </form>
       <div class="politic">
         <p class="politic_text">
           Нажимая кнопку отправить, вы выражаете согласие на передачу и
           обработку <br />
           персональных данных в соответствии с
-          <a
-            href="politic.html"
-            style="text-decoration: underline; color: #3d210b"
-            >политикой конфиденциальности</a
-          >.
+          <a href="politic.html" style="text-decoration: underline; color: #3d210b">политикой конфиденциальности</a>.
         </p>
         <button @click="sendFormData" :disabled="isLoading">
           {{ buttonText }}
@@ -135,7 +67,7 @@
       <p>{{ alert.message }}</p>
     </div>
   </div>
-  
+
 </template>
 
 <script>
@@ -669,6 +601,7 @@ body {
 }
 
 @keyframes blink {
+
   0%,
   100% {
     content: "";
