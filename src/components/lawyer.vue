@@ -16,8 +16,12 @@
           Заявки отправленные помощнику
         </button>
         <button class="tab-button" :class="{ active: activeTab === 'resolved' }" @click="switchTab('resolved')">
-          Решенные заявки
+          Решенные заявки помошником
         </button>
+        <button class="tab-button" :class="{ active: activeTab === 'stats' }" @click="switchTab('stats')">
+          Статистика
+        </button>
+
       </div>
       <button class="logout-button" @click="logout">Выйти</button>
     </nav>
@@ -209,7 +213,7 @@
 
     <!-- Таблица для решенных заявок -->
     <div v-if="activeTab === 'resolved'">
-      <h2>Решенные заявки</h2>
+      <h2>Решенные заявки помошником</h2>
       <table class="submissions-table" v-if="resolvedSubmissions.length > 0">
         <thead>
           <tr>
@@ -229,10 +233,21 @@
           <tr v-for="submission in paginatedResolvedSubmissions" :key="submission.id">
             <td>{{ submission.id }}</td>
             <td>{{ new Date(submission.created_at).toLocaleString() }}</td>
-            <td>{{ submission.assistant_sent_at ? new Date(submission.assistant_sent_at).toLocaleString() : 'Не указано'   }} </td>
-            <td>{{ submission.assistant_resolved_at ? new Date(submission.assistant_resolved_at).toLocaleString() : 'Не  указано' }}</td>
-            <td>{{ submission.revision_requested_at ? new Date(submission.revision_requested_at).toLocaleString() : 'Не указано' }}</td>
-            <td>{{ submission.revision_completed_at ? new Date(submission.revision_completed_at).toLocaleString() : 'Неуказано' }}</td>
+            <td>{{ submission.assistant_sent_at ? new Date(submission.assistant_sent_at).toLocaleString() : 'Не указано'
+            }}
+            </td>
+            <td>{{ submission.assistant_resolved_at ? new Date(submission.assistant_resolved_at).toLocaleString() : 'Не указано' }}</td>
+
+             
+
+            <td>{{ submission.revision_requested_at ? new Date(submission.revision_requested_at).toLocaleString() : 'Не   указано' }}</td>
+
+           
+
+            <td>{{ submission.revision_completed_at ? new Date(submission.revision_completed_at).toLocaleString() :         'Неуказано' }}</td>
+     
+
+
             <td>{{ submission.resolution_time_minutes !== '—' ? submission.resolution_time_minutes : '—' }}</td>
             <td>{{ submission.revision_time_minutes !== '—' ? submission.revision_time_minutes : '—' }}</td>
             <td>
@@ -317,6 +332,133 @@
       </div>
     </div>
 
+    <div v-if="activeTab === 'stats'">
+      <h2>Статистика</h2>
+
+      <div class="stats-toolbar">
+        <div class="stats-presets">
+          <button class="preset-btn" @click="setPreset('today')">Сегодня</button>
+          <button class="preset-btn" @click="setPreset('week')">7 дней</button>
+          <button class="preset-btn" @click="setPreset('month')">Текущий месяц</button>
+          <button class="preset-btn" @click="setPreset('prevMonth')">Прошлый месяц</button>
+        </div>
+
+        <div class="stats-range">
+          <div class="range-field">
+            <label>Дата с:</label>
+            <input type="date" v-model="statsRange.start" />
+          </div>
+
+          <div class="range-field">
+            <label>Дата по:</label>
+            <input type="date" v-model="statsRange.end" />
+          </div>
+
+          <button class="apply-btn" @click="fetchStats" :disabled="statsLoading">
+            Применить
+          </button>
+        </div>
+      </div>
+
+      <div v-if="statsError" class="stats-error">{{ statsError }}</div>
+
+   <div class="stats-cards">
+  <div class="stats-card">
+    <div class="stats-title">Создано заявок</div>
+    <div class="stats-value" v-if="!statsLoading">{{ statsTotalCreated }}</div>
+    <div v-else>Загрузка...</div>
+    <div class="stats-subtitle">по created_at</div>
+  </div>
+
+  <div class="stats-card">
+    <div class="stats-title">Отправлено помощнику</div>
+    <div class="stats-value" v-if="!statsLoading">{{ statsSentToAssistant }}</div>
+    <div v-else>Загрузка...</div>
+    <div class="stats-subtitle">по assistant_sent_at</div>
+  </div>
+
+  <div class="stats-card">
+    <div class="stats-title">Решил помощник</div>
+    <div class="stats-value" v-if="!statsLoading">{{ statsAssistantResolved }}</div>
+    <div v-else>Загрузка...</div>
+    <div class="stats-subtitle">по assistant_resolved_at</div>
+  </div>
+
+  <div class="stats-card">
+    <div class="stats-title">Отправлено на доработку</div>
+    <div class="stats-value" v-if="!statsLoading">{{ statsSentToRevision }}</div>
+    <div v-else>Загрузка...</div>
+    <div class="stats-subtitle">по revision_requested_at</div>
+  </div>
+</div>
+
+<div class="stats-actions">
+  <div class="stats-filter">
+    <label>Показать список:</label>
+    <select v-model="statsListType" :disabled="statsLoading">
+      <option value="created">Созданные за период</option>
+      <option value="sent">Отправленные помощнику</option>
+      <option value="resolved">Решённые помощником</option>
+      <option value="revision">Отправленные на доработку</option>
+    </select>
+  </div>
+
+  <button class="apply-btn"
+          @click="toggleStatsItems"
+          :disabled="statsLoading || statsCounterByType() === 0">
+    {{ statsShowItems ? 'Скрыть заявки' : 'Показать заявки' }}
+  </button>
+</div>
+
+
+
+
+  <div v-if="statsShowItems" class="stats-list">
+    <div class="stats-list-title"> {{ statsListTitle }}</div>
+    <div v-if="statsItems.length === 0 && !statsLoading" class="stats-empty">
+      Заявок за выбранный период нет.
+    </div>
+
+    <table v-else class="submissions-table">
+      <thead>
+  <tr>
+    <th>ID</th>
+    <th>Дата</th>
+    <th>ФИО</th>
+    <th>Проблема</th>
+    <th>Файлы</th>
+  </tr>
+</thead>
+
+<tbody>
+  <tr v-for="it in statsItems" :key="it.id">
+    <td>{{ it.id }}</td>
+    <td>{{ new Date(getStatsEventDate(it)).toLocaleString() }}</td>
+
+
+    <td>
+      {{ [it.surname, it.name, it.patronymic].filter(Boolean).join(' ') }}
+    </td>
+
+    <td>
+      {{ it.problem && it.problem.length > 120 ? it.problem.substring(0, 120) + '...' : it.problem }}
+      <button class="expand-button" v-if="it.problem" @click="showFullProblem(it.problem)">Подробнее</button>
+    </td>
+
+    <td>
+      <ul v-if="parseLinks(it.file_links).length">
+        <li v-for="(f, idx) in parseLinks(it.file_links)" :key="idx">
+          <a :href="f.url" target="_blank">{{ f.name }}</a>
+        </li>
+      </ul>
+      <span v-else class="muted">—</span>
+    </td>
+  </tr>
+</tbody>
+    </table>
+  </div>
+
+    </div>
 
     <div v-if="showModal" class="modal-overlay">
       <div class="modal-content">
@@ -328,13 +470,13 @@
 
 
   </div>
-<!-- Модальное окно ожидания -->
-<div v-if="isSharing" class="blocking-modal">
-  <div class="modal-content center-text">
-    <div class="spinner"></div>
-    <p>⏳ Подождите пожалуйста, файлы отправляются...</p>
+  <!-- Модальное окно ожидания -->
+  <div v-if="isSharing" class="blocking-modal">
+    <div class="modal-content center-text">
+      <div class="spinner"></div>
+      <p>⏳ Подождите пожалуйста, файлы отправляются...</p>
+    </div>
   </div>
-</div>
 
 </template>
 
@@ -348,7 +490,23 @@ export default {
       deletedSubmissions: [],
       assistantSubmissions: [],
       resolvedSubmissions: [],
-      
+
+statsTotalCreated: 0,
+statsSentToAssistant: 0,
+statsAssistantResolved: 0,
+statsSentToRevision: 0,
+
+statsListType: 'created', // created|sent|resolved|revision
+
+      statsRange: {
+        start: '', // YYYY-MM-DD
+        end: ''    // YYYY-MM-DD
+      },
+      statsTotal: 0,
+      statsLoading: false,
+      statsError: '',
+      statsItems: [],
+statsShowItems: false,
       isSharing: false,
 
       showModal: false,
@@ -376,7 +534,13 @@ export default {
     };
   },
   computed: {
-
+statsListTitle() {
+  if (this.statsListType === 'created') return 'Список: созданные заявки за период';
+  if (this.statsListType === 'sent') return 'Список: отправленные помощнику за период';
+  if (this.statsListType === 'resolved') return 'Список: решённые помощником за период';
+  if (this.statsListType === 'revision') return 'Список: отправленные на доработку за период';
+  return 'Список заявок';
+},
     paginatedSubmissions() {
       return this.submissions.slice(
         (this.currentPage.active - 1) * this.itemsPerPage,
@@ -444,7 +608,10 @@ export default {
   created() {
     this.fetchSubmissions();
   },
-  methods: {
+  methods:{
+
+
+  
     // Открытие модального окна
     openRevisionModal(submissionId) {
       this.currentSubmissionId = submissionId;
@@ -521,38 +688,199 @@ export default {
       }).replace(/\n/g, "<br>"); // Добавляем переносы строк
     }
     ,
+    setPreset(preset) {
+      const today = new Date();
 
+      const toDateInput = (d) => {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+      };
+
+      const start = new Date(today);
+      const end = new Date(today);
+
+      if (preset === 'today') {
+        // start=end=today
+      }
+
+      if (preset === 'week') {
+        start.setDate(start.getDate() - 6); // включая сегодня -> 7 дней
+      }
+
+      if (preset === 'month') {
+        start.setDate(1);
+      }
+
+      if (preset === 'prevMonth') {
+        // прошлый месяц: start=1 число прошлого месяца, end=последний день прошлого месяца
+        start.setMonth(start.getMonth() - 1);
+        start.setDate(1);
+
+        end.setDate(0); // 0 день текущего месяца = последний день прошлого
+      }
+
+      this.statsRange.start = toDateInput(start);
+      this.statsRange.end = toDateInput(end);
+    },
+async toggleStatsItems() {
+  if (this.statsShowItems) {
+    this.statsShowItems = false;
+    this.statsItems = [];
+    return;
+  }
+
+  await this.fetchStatsItems();
+  this.statsShowItems = true;
+},
+async fetchStatsItems() {
+  try {
+    this.statsLoading = true;
+    this.statsError = '';
+
+    if (!this.statsRange.start || !this.statsRange.end) {
+      this.statsError = 'Укажите период (дата с / дата по).';
+      return;
+    }
+    if (this.statsRange.start > this.statsRange.end) {
+      this.statsError = 'Дата "с" не может быть больше даты "по".';
+      return;
+    }
+
+    const params = new URLSearchParams({
+      start: this.statsRange.start,
+      end: this.statsRange.end,
+      items: '1',
+      list: this.statsListType
+    });
+
+    const response = await fetch(`/get_statistics.php?${params.toString()}`, {
+      credentials: 'include'
+    });
+
+    const data = await response.json();
+    if (!data.success) {
+      this.statsError = data.message || 'Ошибка получения статистики';
+      return;
+    }
+
+    this.statsItems = Array.isArray(data.items) ? data.items : [];
+
+  } catch (e) {
+    console.error(e);
+    this.statsError = 'Ошибка связи с сервером';
+  } finally {
+    this.statsLoading = false;
+  }
+},
+    async fetchStats() {
+  try {
+    this.statsLoading = true;
+    this.statsError = '';
+
+    if (!this.statsRange.start || !this.statsRange.end) {
+      this.statsError = 'Укажите период (дата с / дата по).';
+      return;
+    }
+    if (this.statsRange.start > this.statsRange.end) {
+      this.statsError = 'Дата "с" не может быть больше даты "по".';
+      return;
+    }
+
+    const params = new URLSearchParams({
+      start: this.statsRange.start,
+      end: this.statsRange.end
+    });
+
+    const response = await fetch(`/get_statistics.php?${params.toString()}`, {
+      credentials: 'include'
+    });
+
+    const data = await response.json();
+    if (!data.success) {
+      this.statsError = data.message || 'Ошибка получения статистики';
+      return;
+    }
+
+    // новые метрики
+    this.statsTotalCreated = Number(data.total_created || 0);
+    this.statsSentToAssistant = Number(data.sent_to_assistant || 0);
+    this.statsAssistantResolved = Number(data.assistant_resolved || 0);
+    this.statsSentToRevision = Number(data.sent_to_revision || 0);
+
+    // сброс списка
+    this.statsShowItems = false;
+    this.statsItems = [];
+
+  } catch (e) {
+    console.error(e);
+    this.statsError = 'Ошибка связи с сервером';
+  } finally {
+    this.statsLoading = false;
+  }
+},
+
+statsCounterByType() {
+  if (this.statsListType === 'created') return this.statsTotalCreated;
+  if (this.statsListType === 'sent') return this.statsSentToAssistant;
+  if (this.statsListType === 'resolved') return this.statsAssistantResolved;
+  if (this.statsListType === 'revision') return this.statsSentToRevision;
+  return 0;
+},
+
+getStatsEventDate(it) {
+  if (this.statsListType === 'created') return it.created_at;
+  if (this.statsListType === 'sent') return it.assistant_sent_at;
+  if (this.statsListType === 'resolved') return it.assistant_resolved_at;
+  if (this.statsListType === 'revision') return it.revision_requested_at;
+  return it.created_at;
+},
+
+    formatDuration(diffMs) {
+      if (!diffMs || diffMs < 0) return '—';
+
+      const totalSeconds = Math.floor(diffMs / 1000);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+
+      // Если часов нет — не показываем "0 ч"
+      return hours > 0
+        ? `${hours} ч ${minutes} мин ${seconds} сек`
+        : `${minutes} мин ${seconds} сек`;
+    },
 
 
 
 
     async shareWithAssistant(id) {
-  try {
-    this.isSharing = true; // Показать модалку
-    const response = await fetch(`/share_with_assistant.php`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ id })
-    });
+      try {
+        this.isSharing = true; // Показать модалку
+        const response = await fetch(`/share_with_assistant.php`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ id })
+        });
 
-    const data = await response.json();
-    if (data.success) {
-      alert('Заявка успешно отправлена помощнику.');
-      this.fetchSubmissions(); // Обновить список
-    } else {
-      alert('Ошибка: ' + data.message);
+        const data = await response.json();
+        if (data.success) {
+          alert('Заявка успешно отправлена помощнику.');
+          this.fetchSubmissions(); // Обновить список
+        } else {
+          alert('Ошибка: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Ошибка при отправке:', error);
+        alert('Произошла ошибка при отправке.');
+      } finally {
+        this.isSharing = false; // Скрыть модалку
+      }
     }
-  } catch (error) {
-    console.error('Ошибка при отправке:', error);
-    alert('Произошла ошибка при отправке.');
-  } finally {
-    this.isSharing = false; // Скрыть модалку
-  }
-}
-,
+    ,
     async returnSubmission(id) {
       try {
         console.log('Возврат заявки с ID:', id);
@@ -579,9 +907,18 @@ export default {
 
     switchTab(tab) {
       this.activeTab = tab;
-      this.currentPage[tab] = 1; // Сброс на первую страницу
+
+      if (tab === 'stats') {
+        // дефолт: текущий месяц
+        this.setPreset('month');
+        this.fetchStats();
+        return;
+      }
+
+      this.currentPage[tab] = 1;
       this.fetchSubmissions();
     },
+
     parseLinks(fileLinks) {
       try {
         console.log('file_links перед парсингом:', fileLinks);
@@ -662,20 +999,16 @@ export default {
 
               let resolutionTime = '—';
               let revisionTime = '—';
-
               if (sentAt && resolvedAt && !isNaN(sentAt) && !isNaN(resolvedAt)) {
                 const diffMs = resolvedAt - sentAt;
-                const minutes = Math.floor(diffMs / 60000);
-                const seconds = Math.floor((diffMs % 60000) / 1000);
-                resolutionTime = `${minutes} мин ${seconds} сек`;
+                resolutionTime = this.formatDuration(diffMs);
               }
 
               if (revisionRequestedAt && revisionCompletedAt && !isNaN(revisionRequestedAt) && !isNaN(revisionCompletedAt)) {
                 const diffMs = revisionCompletedAt - revisionRequestedAt;
-                const minutes = Math.floor(diffMs / 60000);
-                const seconds = Math.floor((diffMs % 60000) / 1000);
-                revisionTime = `${minutes} мин ${seconds} сек`;
+                revisionTime = this.formatDuration(diffMs);
               }
+
 
               return {
                 ...submission,
@@ -792,6 +1125,35 @@ td ul li a {
 td ul li a:hover {
   text-decoration: underline;
 }
+.stats-list {
+  margin-top: 15px;
+  background: #fff;
+  border-radius: 10px;
+  padding: 15px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+}
+
+.stats-items {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0 0;
+}
+
+.stats-item {
+  padding: 10px 12px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background: #fafafa;
+}
+
+.muted {
+  color: #666;
+}
+
+.small {
+  font-size: 12px;
+}
 
 .problem-text {
   max-height: 300px;
@@ -865,6 +1227,140 @@ td ul li a:hover {
 
 .return-button:hover {
   background-color: rgb(179, 108, 23);
+}
+
+/* ====== STATISTICS TAB ====== */
+
+.stats-toolbar {
+  margin-top: 15px;
+  background: #f2f2f2;
+  border: 1px solid #e1e1e1;
+  border-radius: 12px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stats-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.preset-btn {
+  padding: 10px 14px;
+  border: none;
+  border-radius: 10px;
+  background: #e0e0e0;
+  color: #333;
+  cursor: pointer;
+  font-weight: 700;
+  transition: 0.25s;
+}
+
+.preset-btn:hover {
+  background: #d3d3d3;
+}
+
+.stats-range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.range-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.range-field label {
+  font-size: 12px;
+  color: #555;
+  font-weight: 700;
+}
+
+.range-field input[type="date"] {
+  padding: 10px 12px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  outline: none;
+  background: #fff;
+  font-size: 14px;
+  min-width: 180px;
+  transition: 0.25s;
+}
+
+.range-field input[type="date"]:focus {
+  border-color: #970e0e;
+}
+
+.apply-btn {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  background: #970e0e;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 800;
+  transition: 0.25s;
+}
+
+.apply-btn:hover {
+  background: #b91010;
+}
+
+.apply-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.stats-error {
+  margin-top: 12px;
+  background: #ffe5e5;
+  border: 1px solid #ffb6b6;
+  color: #8a1f1f;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.stats-cards {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.stats-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #eee;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  padding: 18px;
+}
+
+.stats-title {
+  font-size: 14px;
+  color: #555;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.stats-value {
+  font-size: 42px;
+  font-weight: 900;
+  color: #970e0e;
+  line-height: 1;
+}
+
+.stats-subtitle {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #777;
+  font-weight: 700;
 }
 
 h1 {
@@ -1175,6 +1671,46 @@ p {
   cursor: pointer;
   font-size: 14px;
 }
+.stats-actions {
+  margin-top: 14px;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.stats-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stats-filter label {
+  font-size: 12px;
+  color: #555;
+  font-weight: 700;
+}
+
+.stats-filter select {
+  padding: 10px 12px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  background: #fff;
+  min-width: 260px;
+  font-size: 14px;
+  outline: none;
+  transition: 0.25s;
+}
+
+.stats-filter select:focus {
+  border-color: #970e0e;
+}
+
+.stats-list-title {
+  font-weight: 800;
+  color: #333;
+  margin-bottom: 10px;
+}
 
 .modal-buttons {
   display: flex;
@@ -1282,6 +1818,7 @@ p {
   padding: 10px;
   text-align: center;
 }
+
 .blocking-modal {
   position: fixed;
   top: 0;
@@ -1304,7 +1841,7 @@ p {
 .spinner {
   margin: 0 auto 20px auto;
   border: 6px solid #f3f3f3;
-  border-top: 6px solid #ffffff; 
+  border-top: 6px solid #ffffff;
   border-radius: 50%;
   width: 50px;
   height: 50px;
@@ -1312,7 +1849,12 @@ p {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 </style>

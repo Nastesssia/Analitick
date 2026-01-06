@@ -448,6 +448,7 @@ export default {
       console.log("📝 Отправляемая заявка:", this.selectedSubmission);
 
       const formData = new FormData();
+      formData.append('submission_id', this.selectedSubmission?.id); 
       formData.append('subject', this.answerSubject);
       formData.append('answer_text', this.answerText);
       formData.append('surname', this.selectedSubmission?.surname || '');
