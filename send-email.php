@@ -254,7 +254,7 @@ try {
     $mailer->CharSet = 'UTF-8';
 
     // 6.1 Юрист
-    $mailer->setFrom(YANDEX_SMTP_USER, 'АналитикГрупп');
+    $mailer->setFrom(YANDEX_SMTP_USER, $email);
     $mailer->addReplyTo($email, $surname . ' ' . $name);
     $mailer->addAddress(LAWYER_EMAIL, 'Юрист');
 
