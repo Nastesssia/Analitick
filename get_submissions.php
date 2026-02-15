@@ -6,16 +6,14 @@ require_once 'DB_Connect.php';
 $db = new DB_Connect();
 $conn = $db->connect();
 
-// Проверяем авторизацию пользователя
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'lawyer') {
     echo json_encode(["success" => false, "message" => "Доступ запрещен."]);
     exit();
 }
 
-// Получение текущей страницы и количества записей на страницу
 $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
 $itemsPerPage = isset($_GET['itemsPerPage']) ? intval($_GET['itemsPerPage']) : 10;
-$offset = ($page - 1) * $itemsPerPage; // Теперь правильно считаем сдвиг
+$offset = ($page - 1) * $itemsPerPage; 
 
 $sql = "SELECT id, surname, name, patronymic, phone, email, problem, file_links, deleted, created_at, visible_to_assistant 
         FROM form_submissions 
@@ -35,7 +33,6 @@ while ($row = $result->fetch_assoc()) {
     $submissions[] = $row;
 }
 
-// Заявки, отправленные помощнику
 $sqlAssistant = "SELECT id, surname, name, patronymic, phone, email, problem, file_links, deleted, created_at, assistant_sent_at 
                  FROM form_submissions 
                  WHERE visible_to_assistant = 1 AND deleted = 0
@@ -49,7 +46,6 @@ while ($row = $resultAssistant->fetch_assoc()) {
     $assistantSubmissions[] = $row;
 }
 
-// Удаленные заявки
 $sqlDeleted = "SELECT id, surname, name, patronymic, phone, email, problem, file_links, deleted, created_at 
                FROM form_submissions 
                WHERE deleted = 1
@@ -62,26 +58,24 @@ while ($row = $resultDeleted->fetch_assoc()) {
     $deletedSubmissions[] = $row;
 }
 
-
-// Подсчет общего количества активных заявок
 $countResult = $conn->query("SELECT COUNT(*) as total FROM form_submissions WHERE visible_to_assistant = 0 AND deleted = 0");
 $totalCount = $countResult->fetch_assoc()['total'];
-// Подсчет общего количества заявок, отправленных помощнику
+
 $countResultAssistant = $conn->query("SELECT COUNT(*) as total FROM form_submissions WHERE visible_to_assistant = 1 AND deleted = 0");
 $totalCountAssistant = $countResultAssistant->fetch_assoc()['total'];
 
-// Подсчет общего количества удаленных заявок
+
 $countResultDeleted = $conn->query("SELECT COUNT(*) as total FROM form_submissions WHERE deleted = 1");
 $totalCountDeleted = $countResultDeleted->fetch_assoc()['total'];
 
-// Подсчет общего количества решенных заявок
+
 $countResultResolved = $conn->query("SELECT COUNT(*) as total FROM form_submissions WHERE resolved = 1 AND deleted = 0");
 $totalCountResolved = $countResultResolved->fetch_assoc()['total'];
 
-// Решенные заявки (resolved = 1)
+
 $sqlResolved = "SELECT id, surname, name, patronymic, phone, email, problem, file_links, deleted, created_at, 
                        assistant_sent_at, assistant_resolved_at, resolved, revision_requested_at, 
-                       revision_completed_at, revision_comment, revision_files
+                       revision_completed_at, revision_comment, revision_files, answer_files
                 FROM form_submissions 
                 WHERE resolved = 1 AND deleted = 0
                 ORDER BY id DESC";
@@ -93,10 +87,11 @@ $resolvedSubmissions = [];
 while ($row = $resultResolved->fetch_assoc()) {
     $row['file_links'] = !empty($row['file_links']) ? json_decode($row['file_links']) : [];
     $row['revision_files'] = !empty($row['revision_files']) ? json_decode($row['revision_files']) : [];
+   $row['answer_files'] = !empty($row['answer_files']) ? json_decode($row['answer_files']) : [];
+
     $resolvedSubmissions[] = $row;
 }
 
-// Логирование данных перед отправкой JSON-ответа
 error_log("📄 Решенные заявки: " . json_encode($resolvedSubmissions, JSON_UNESCAPED_UNICODE));
 
 echo json_encode([

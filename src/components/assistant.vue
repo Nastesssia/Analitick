@@ -3,14 +3,12 @@
     <h1>Кабинет помощника</h1>
     <p>Добро пожаловать в кабинет помощника. Здесь вы можете отвечать на заявки.</p>
   </div>
-
   <div class="navbar">
     <div class="navbar-left">
       <h2>Все заявки</h2>
     </div>
     <button class="logout-button" @click="logout">Выйти</button>
   </div>
-
   <div class="dashboard">
     <div v-if="activeTab === 'active'">
       <table class="submissions-table" v-if="paginatedSubmissions.length > 0">
@@ -28,9 +26,7 @@
         <tbody>
           <tr v-for="submission in paginatedSubmissions" :key="submission.id">
             <td>{{ formatDate(submission.assistant_sent_at) }}</td>
-            <td>{{ formatDate(submission.revision_requested_at) }}</td> <!-- Новое поле -->
-
-            <!-- Комментарий на доработку -->
+            <td>{{ formatDate(submission.revision_requested_at) }}</td>
             <td>
               <span v-if="submission.revision_comment">
                 {{ submission.revision_comment.length > 50 ? submission.revision_comment.substring(0, 50) + '...' :
@@ -40,8 +36,6 @@
               </span>
               <span v-else>—</span>
             </td>
-
-            <!-- Файлы для доработки -->
             <td>
               <ul v-if="submission.revision_files && submission.revision_files.length > 0">
                 <li v-for="(file, index) in submission.revision_files" :key="index">
@@ -50,16 +44,12 @@
               </ul>
               <span v-else>—</span>
             </td>
-
-            <!-- Проблема -->
             <td>
               <span>
                 {{ submission.problem.length > 50 ? submission.problem.substring(0, 50) + '...' : submission.problem }}
               </span>
               <button class="expand-button" @click="showFullProblem(submission.problem)">Развернуть</button>
             </td>
-
-            <!-- Ссылки на файлы -->
             <td>
               <ul v-if="submission.file_links.length > 0">
                 <li v-for="(file, index) in submission.file_links" :key="index">
@@ -78,13 +68,10 @@
       </table>
       <p v-else>Заявок пока нет.</p>
       <div class="pagination">
-        <!-- Кнопка "Первая страница" -->
         <button @click="changePage(1)" :disabled="currentPage === 1">«</button>
 
-        <!-- Кнопка "Назад" -->
         <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1">‹</button>
 
-        <!-- Перебор страниц с учетом скрытых -->
         <template v-for="page in visiblePages">
           <button v-if="page === '...'" class="dots" disabled>...</button>
           <button v-else :class="{ active: page === currentPage }" @click="changePage(page)">
@@ -92,15 +79,12 @@
           </button>
         </template>
 
-        <!-- Кнопка "Вперед" -->
         <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages">›</button>
 
-        <!-- Кнопка "Последняя страница" -->
         <button @click="changePage(totalPages)" :disabled="currentPage === totalPages">»</button>
       </div>
 
     </div>
-    <!-- Модальное окно для полного комментария -->
     <div v-if="showCommentModal" class="modal-overlay">
       <div class="modal-content">
         <h2>Комментарий на доработку</h2>
@@ -108,21 +92,17 @@
         <button class="close-button" @click="closeCommentModal">Закрыть</button>
       </div>
     </div>
-    <!-- Модальное окно для ответа на заявку -->
     <div v-if="showAnswerModal" class="modal-overlay">
       <div class="modal-content">
         <h2>Ответ на заявку ID: {{ selectedSubmission?.id }}</h2>
-
         <div class="form-group">
           <label>Тема:</label>
           <input v-model="answerSubject" type="text" placeholder="Введите тему ответа" maxlength="100" />
         </div>
-
         <div class="form-group">
           <label>Ответ:</label>
           <textarea v-model="answerText" placeholder="Введите текст ответа"></textarea>
         </div>
-
         <div class="form-group">
           <label>Прикрепить файлы (до 5 файлов, максимум 25 МБ, запрещены .zip, .rar, .7z):</label>
           <div class="file-upload">
@@ -130,7 +110,6 @@
             <input type="file" id="file-upload-button" multiple @change="handleFileUpload" />
             <p class="file-upload-info">Максимум 5 файлов, до 25МБ</p>
           </div>
-
           <p>Прикреплено файлов: {{ attachedFiles.length }} / 5</p>
           <ul>
             <li v-for="(file, index) in attachedFiles" :key="index">
@@ -139,24 +118,18 @@
             </li>
           </ul>
         </div>
-
-        <!-- Индикатор загрузки на весь экран -->
         <div v-if="isLoading" class="global-loading-overlay">
           <div class="global-loader">
             <div class="spinner"></div>
             <p>Загрузка... Пожалуйста, подождите</p>
           </div>
         </div>
-
-
         <div class="modal-actions">
           <button @click="submitAnswer" :disabled="isLoading">Отправить</button>
           <button @click="closeModal" :disabled="isLoading">Отмена</button>
         </div>
       </div>
     </div>
-
-    <!-- Модальное окно для полной проблемы -->
     <div v-if="showModal" class="modal-overlay">
       <div class="modal-content">
         <h2>Полный текст проблемы</h2>
@@ -164,8 +137,6 @@
         <button class="close-button" @click="closeModal">Закрыть</button>
       </div>
     </div>
-
-
   </div>
 </template>
 
@@ -197,30 +168,20 @@ export default {
     visiblePages() {
       const total = this.totalPages;
       const current = this.currentPage;
-      const delta = 2; // Количество страниц слева и справа от активной
+      const delta = 2;
       const range = [];
       let left = Math.max(2, current - delta);
       let right = Math.min(total - 1, current + delta);
-
-      // Добавляем первую страницу всегда
       range.push(1);
-
-      // Добавляем `...` если слева больше страниц
       if (left > 2) {
         range.push("...");
       }
-
-      // Добавляем страницы в диапазоне
       for (let i = left; i <= right; i++) {
         range.push(i);
       }
-
-      // Добавляем `...` если справа есть скрытые страницы
       if (right < total - 1) {
         range.push("...");
       }
-
-      // Добавляем последнюю страницу всегда
       if (total > 1) {
         range.push(total);
       }
@@ -250,10 +211,8 @@ export default {
     formatProblemText(text) {
       if (!text) return "";
 
-      // Регулярное выражение для поиска ссылок
       const urlRegex = /(https?:\/\/[^\s]+)/g;
 
-      // Заменяем ссылки на <a> + добавляем переносы строк
       return text.replace(urlRegex, (url) => {
         return `<a href="${url}" target="_blank" class="problem-link">${url}</a>`;
       }).replace(/\n/g, "<br>");
@@ -297,8 +256,8 @@ export default {
         if (data.success) {
           this.submissions = data.submissions.map(sub => ({
             ...sub,
-            file_links: this.parseLinks(sub.file_links),
-            revision_files: this.parseLinks(sub.revision_files)
+            file_links: this.parseLinks(sub.file_links, sub.id, 'main'),
+            revision_files: this.parseLinks(sub.revision_files, sub.id, 'revision'),
           }));
           this.totalCount = data.totalCount;
 
@@ -319,57 +278,30 @@ export default {
     },
 
 
-    parseLinks(fileLinks) {
+    parseLinks(fileLinks, submissionId, kind = 'main') {
       try {
-        console.log('📂 Исходные ссылки на файлы:', fileLinks);
+        if (!fileLinks || fileLinks === 'NULL' || fileLinks === '' || typeof fileLinks === 'undefined') return [];
 
-        // Проверка на null, undefined или пустую строку
-        if (!fileLinks || fileLinks === 'NULL' || fileLinks === '') {
-          console.warn('⚠️ fileLinks пустое или NULL');
-          return [];
-        }
+        const links = (typeof fileLinks === 'string') ? JSON.parse(fileLinks) : fileLinks;
+        if (!Array.isArray(links) || links.length === 0) return [];
 
-        // Если уже массив объектов с url и name, возвращаем напрямую
-        if (Array.isArray(fileLinks) && fileLinks.length > 0 && fileLinks[0]?.url && fileLinks[0]?.name) {
-          console.log('✅ fileLinks уже содержит объекты:', fileLinks);
-          return fileLinks;
-        }
-
-        // Если массив строк, преобразуем в массив объектов
-        if (Array.isArray(fileLinks) && typeof fileLinks[0] === 'string') {
-          console.log('✅ fileLinks является массивом строк:', fileLinks);
-          return fileLinks.map(link => ({
-            url: link,
-            name: link.split('/').pop() // Берем имя файла из URL
+        if (links[0]?.id && links[0]?.name) {
+          if (!submissionId) return [];
+          return links.map(f => ({
+            name: f.name,
+            url: `/download_file.php?submission_id=${encodeURIComponent(submissionId)}&file_id=${encodeURIComponent(f.id)}&kind=${encodeURIComponent(kind)}`
           }));
         }
 
-        // Если fileLinks — строка (например, JSON), пробуем парсить
-        if (typeof fileLinks === 'string') {
-          console.log('📦 Попытка парсинга JSON:', fileLinks);
-          const links = JSON.parse(fileLinks);
+        if (links[0]?.url && links[0]?.name) return links;
 
-          // Если после парсинга получили массив строк, преобразуем в объекты
-          if (Array.isArray(links) && typeof links[0] === 'string') {
-            return links.map(link => ({
-              url: link,
-              name: link.split('/').pop()
-            }));
-          }
-
-          // Если получили массив объектов с url и name, возвращаем
-          if (Array.isArray(links) && links[0]?.url && links[0]?.name) {
-            return links;
-          }
-
-          console.warn('🚫 Неизвестный формат после парсинга JSON:', links);
-          return [];
+        if (typeof links[0] === 'string') {
+          return links.map(u => ({ url: u, name: u.split('/').pop() }));
         }
 
-        console.warn('🚫 Неизвестный формат данных для fileLinks:', fileLinks);
         return [];
       } catch (e) {
-        console.error('🛑 Ошибка парсинга ссылок на файлы:', e, 'Исходное значение:', fileLinks);
+        console.error('parseLinks error', e, fileLinks);
         return [];
       }
     }
@@ -419,7 +351,6 @@ export default {
       const files = Array.from(event.target.files);
       const combinedFiles = [...this.attachedFiles, ...files].slice(0, 5);
 
-      // Запрещенные форматы
       const forbiddenExtensions = ['.zip', '.rar', '.7z'];
       const invalidFiles = combinedFiles.filter(file => {
         const fileSizeValid = file.size <= 25 * 1024 * 1024;
@@ -448,7 +379,7 @@ export default {
       console.log("📝 Отправляемая заявка:", this.selectedSubmission);
 
       const formData = new FormData();
-      formData.append('submission_id', this.selectedSubmission?.id); 
+      formData.append('submission_id', this.selectedSubmission?.id);
       formData.append('subject', this.answerSubject);
       formData.append('answer_text', this.answerText);
       formData.append('surname', this.selectedSubmission?.surname || '');
@@ -465,7 +396,7 @@ export default {
       });
 
       try {
-        this.isLoading = true; // Показать индикатор загрузки
+        this.isLoading = true;
 
         const response = await fetch('/send_answer.php', {
           method: 'POST',
@@ -486,7 +417,7 @@ export default {
       } catch (error) {
         console.error('Ошибка при отправке ответа:', error);
       } finally {
-        this.isLoading = false; // Скрыть индикатор загрузки в любом случае
+        this.isLoading = false;
       }
     }
 
@@ -900,6 +831,7 @@ button {
   padding: 10px;
   text-align: center;
 }
+
 /* Скрываем стандартный input */
 #file-upload-button {
   display: none;
@@ -908,10 +840,10 @@ button {
 /* Стили для кастомной кнопки */
 .file-upload-label {
   display: inline-block;
-  background-color: #6f53d86c ;
+  background-color: #6f53d86c;
   padding: 12px 20px;
   border-radius: 8px;
-  color:white;
+  color: white;
   margin: 0px;
   font-size: 14px;
   width: 30%;
@@ -934,6 +866,7 @@ button {
   color: #666;
   margin-top: 5px;
 }
+
 @keyframes fadeIn {
   from {
     opacity: 0;

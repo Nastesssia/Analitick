@@ -35,7 +35,9 @@
               </div>
               <span v-if="fileItem.isLoading" class="loading-circle"></span>
               <span v-else class="check-mark">✔</span>
-              <button @click="removeFile(index)">✖</button>
+              <button type="button" @click.prevent="removeFile(index)">✖</button>
+
+
             </div>
           </div>
           <label for="fileInput" class="file-upload-label">

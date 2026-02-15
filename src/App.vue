@@ -1,6 +1,5 @@
 <template>
   <div id="App">
-    <!-- Если НЕ login, lawyer, assistant - показываем сайт -->
     <div v-if="!['/login', '/lawyer', '/assistant'].includes($route.path)">
       <input class="side-menu" type="checkbox" id="side-menu" />
       <label class="hamb" for="side-menu"><span class="hamb-line"></span></label>
@@ -38,8 +37,6 @@
           </div>
         </header>
       </section>
-
-      <!-- Другие компоненты сайта -->
       <info />
       <individ />
       <entity />
@@ -50,8 +47,6 @@
       <footername />
       <div class="none"></div>
     </div>
-
-    <!-- Здесь загружаются login, lawyer, assistant -->
     <router-view v-if="['/login', '/lawyer', '/assistant'].includes($route.path)" />
   </div>
 </template>
@@ -101,8 +96,6 @@ export default {
 };
 </script>
 
-
-<!-- Стили -->
 <style>
 @import url("https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap");
 
@@ -111,9 +104,7 @@ body {
   margin: 0px;
   padding: 0px;
   -webkit-box-sizing: border-box;
-  /* Для WebKit (Chrome, Safari) */
   -moz-box-sizing: border-box;
-  /* Для Mozilla Firefox */
   box-sizing: border-box;
 }
 

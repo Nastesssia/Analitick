@@ -1,7 +1,11 @@
 <template>
   <div class="container">
-    <h1>Кабинет юриста</h1>
+    <div class="header-row">
+      <h1>Кабинет юриста</h1>
+     
+    </div>
     <p>Добро пожаловать в кабинет юриста. Здесь вы можете управлять заявками и просматривать документы.</p>
+
   </div>
   <div class="dashboard">
     <nav class="navbar">
@@ -23,10 +27,9 @@
         </button>
 
       </div>
+           <button class="create-btn" @click="openCreateModal" title="Создать заявку">＋</button>
       <button class="logout-button" @click="logout">Выйти</button>
     </nav>
-
-    <!-- Таблица для активных заявок -->
     <div v-if="activeTab === 'active'">
       <h2>Активные заявки</h2>
       <table class="submissions-table" v-if="submissions.length > 0">
@@ -50,7 +53,7 @@
               📝 {{ submission.problem.length > 50 ? submission.problem.substring(0, 50) + '...' : submission.problem }}
               <button class="expand-button" @click="showFullProblem(submission.problem)">Подробнее</button><br>
               📂 <ul>
-                <li v-for="(file, index) in parseLinks(submission.file_links)" :key="index">
+                <li v-for="(file, index) in parseLinks(submission.file_links, submission.id, 'main')" :key="index">
                   <a :href="file.url" target="_blank">{{ file.name }}</a>
                 </li>
               </ul>
@@ -69,23 +72,18 @@
       </table>
       <p v-else>Заявок пока нет.</p>
       <div class="pagination">
-        <!-- Кнопка "Первая страница" -->
         <button @click="changePage(activeTab, 1)" :disabled="currentPage[activeTab] === 1">«</button>
 
-        <!-- Кнопка "Назад" -->
         <button @click="changePage(activeTab, currentPage[activeTab] - 1)"
           :disabled="currentPage[activeTab] === 1">‹</button>
-        <!-- Перебор страниц с учетом скрытых -->
         <template v-for="page in visiblePages">
           <button v-if="page === '...'" class="dots" disabled>...</button>
           <button v-else :class="{ active: page === currentPage[activeTab] }" @click="changePage(activeTab, page)">
             {{ page }}
           </button>
         </template>
-        <!-- Кнопка "Вперед" -->
         <button @click="changePage(activeTab, currentPage[activeTab] + 1)"
           :disabled="currentPage[activeTab] === totalPages[activeTab]">›</button>
-        <!-- Кнопка "Последняя страница" -->
         <button @click="changePage(activeTab, totalPages[activeTab])"
           :disabled="currentPage[activeTab] === totalPages[activeTab]">»</button>
       </div>
@@ -113,7 +111,7 @@
               📝 {{ submission.problem.length > 50 ? submission.problem.substring(0, 50) + '...' : submission.problem }}
               <button class="expand-button" @click="showFullProblem(submission.problem)">Подробнее</button><br>
               📂 <ul>
-                <li v-for="(file, index) in parseLinks(submission.file_links)" :key="index">
+                <li v-for="(file, index) in parseLinks(submission.file_links, submission.id, 'main')" :key="index">
                   <a :href="file.url" target="_blank">{{ file.name }}</a>
                 </li>
               </ul>
@@ -141,12 +139,10 @@
         <!-- Кнопка "Вперед" -->
         <button @click="changePage(activeTab, currentPage[activeTab] + 1)"
           :disabled="currentPage[activeTab] === totalPages[activeTab]">›</button>
-        <!-- Кнопка "Последняя страница" -->
         <button @click="changePage(activeTab, totalPages[activeTab])"
           :disabled="currentPage[activeTab] === totalPages[activeTab]">»</button>
       </div>
     </div>
-    <!-- ---------------------------------- -->
     <div v-if="activeTab === 'assistant'">
       <h2>Заявки отправленные помощнику</h2>
       <table class="submissions-table" v-if="assistantSubmissions.length > 0">
@@ -173,7 +169,7 @@
               📝 {{ submission.problem.length > 50 ? submission.problem.substring(0, 50) + '...' : submission.problem }}
               <button class="expand-button" @click="showFullProblem(submission.problem)">Подробнее</button><br>
               📂 <ul>
-                <li v-for="(file, index) in parseLinks(submission.file_links)" :key="index">
+                <li v-for="(file, index) in parseLinks(submission.file_links, submission.id, 'main')" :key="index">
                   <a :href="file.url" target="_blank">{{ file.name }}</a>
                 </li>
               </ul>
@@ -187,31 +183,24 @@
       </table>
       <p v-else>Нет заявок, отправленных помощнику.</p>
       <div class="pagination">
-        <!-- Кнопка "Первая страница" -->
         <button @click="changePage(activeTab, 1)" :disabled="currentPage[activeTab] === 1">«</button>
 
-        <!-- Кнопка "Назад" -->
         <button @click="changePage(activeTab, currentPage[activeTab] - 1)"
           :disabled="currentPage[activeTab] === 1">‹</button>
 
-        <!-- Перебор страниц с учетом скрытых -->
         <template v-for="page in visiblePages">
           <button v-if="page === '...'" class="dots" disabled>...</button>
           <button v-else :class="{ active: page === currentPage[activeTab] }" @click="changePage(activeTab, page)">
             {{ page }}
           </button>
         </template>
-        <!-- Кнопка "Вперед" -->
         <button @click="changePage(activeTab, currentPage[activeTab] + 1)"
           :disabled="currentPage[activeTab] === totalPages[activeTab]">›</button>
-        <!-- Кнопка "Последняя страница" -->
         <button @click="changePage(activeTab, totalPages[activeTab])"
           :disabled="currentPage[activeTab] === totalPages[activeTab]">»</button>
       </div>
     </div>
-    <!-- ---------------------------------- -->
 
-    <!-- Таблица для решенных заявок -->
     <div v-if="activeTab === 'resolved'">
       <h2>Решенные заявки помошником</h2>
       <table class="submissions-table" v-if="resolvedSubmissions.length > 0">
@@ -225,6 +214,7 @@
             <th class="revision-header">Дата когда была доработана заявка</th>
             <th class="resolution-header">Время на решение (минут)</th>
             <th class="revision-header">Время на доработку (минут)</th>
+            <th class="allfiles-header">Все файлы <br> (ответы помощника)</th>
             <th>Информация о заявке</th>
             <th>Действия</th>
           </tr>
@@ -237,19 +227,32 @@
             }}
             </td>
             <td>{{ submission.assistant_resolved_at ? new Date(submission.assistant_resolved_at).toLocaleString() : 'Не указано' }}</td>
+              
 
-             
 
-            <td>{{ submission.revision_requested_at ? new Date(submission.revision_requested_at).toLocaleString() : 'Не   указано' }}</td>
 
-           
+            <td>{{ submission.revision_requested_at ? new Date(submission.revision_requested_at).toLocaleString() : 'Не  указано' }}</td>
+        
 
-            <td>{{ submission.revision_completed_at ? new Date(submission.revision_completed_at).toLocaleString() :         'Неуказано' }}</td>
-     
+
+
+
+            <td>{{ submission.revision_completed_at ? new Date(submission.revision_completed_at).toLocaleString() : 'Не указано' }}</td>
+              
+
+
 
 
             <td>{{ submission.resolution_time_minutes !== '—' ? submission.resolution_time_minutes : '—' }}</td>
             <td>{{ submission.revision_time_minutes !== '—' ? submission.revision_time_minutes : '—' }}</td>
+            <td class="allfiles-cell">
+              <ul v-if="getAllFiles(submission).length">
+                <li v-for="(f, idx) in getAllFiles(submission)" :key="idx">
+                  <a :href="f.url" target="_blank">{{ f.name }}</a>
+                </li>
+              </ul>
+              <span v-else class="muted">—</span>
+            </td>
             <td>
               <strong>{{ submission.surname }} {{ submission.name }} {{ submission.patronymic }}</strong><br>
               📞 {{ submission.phone }}<br>
@@ -257,11 +260,13 @@
               📝 {{ submission.problem.length > 50 ? submission.problem.substring(0, 50) + '...' : submission.problem }}
               <button class="expand-button" @click="showFullProblem(submission.problem)">Подробнее</button><br>
               📂 <ul>
-                <li v-for="(file, index) in parseLinks(submission.file_links)" :key="index">
+                <li v-for="(file, index) in parseLinks(submission.file_links, submission.id, 'main')" :key="index">
                   <a :href="file.url" target="_blank">{{ file.name }}</a>
                 </li>
               </ul>
             </td>
+
+
             <td>
               <button class="revision-button" @click="openRevisionModal(submission.id)">
 
@@ -362,101 +367,99 @@
 
       <div v-if="statsError" class="stats-error">{{ statsError }}</div>
 
-   <div class="stats-cards">
-  <div class="stats-card">
-    <div class="stats-title">Создано заявок</div>
-    <div class="stats-value" v-if="!statsLoading">{{ statsTotalCreated }}</div>
-    <div v-else>Загрузка...</div>
-    <div class="stats-subtitle">по created_at</div>
-  </div>
+      <div class="stats-cards">
+        <div class="stats-card">
+          <div class="stats-title">Создано заявок</div>
+          <div class="stats-value" v-if="!statsLoading">{{ statsTotalCreated }}</div>
+          <div v-else>Загрузка...</div>
+          <div class="stats-subtitle">по created_at</div>
+        </div>
 
-  <div class="stats-card">
-    <div class="stats-title">Отправлено помощнику</div>
-    <div class="stats-value" v-if="!statsLoading">{{ statsSentToAssistant }}</div>
-    <div v-else>Загрузка...</div>
-    <div class="stats-subtitle">по assistant_sent_at</div>
-  </div>
+        <div class="stats-card">
+          <div class="stats-title">Отправлено помощнику</div>
+          <div class="stats-value" v-if="!statsLoading">{{ statsSentToAssistant }}</div>
+          <div v-else>Загрузка...</div>
+          <div class="stats-subtitle">по assistant_sent_at</div>
+        </div>
 
-  <div class="stats-card">
-    <div class="stats-title">Решил помощник</div>
-    <div class="stats-value" v-if="!statsLoading">{{ statsAssistantResolved }}</div>
-    <div v-else>Загрузка...</div>
-    <div class="stats-subtitle">по assistant_resolved_at</div>
-  </div>
+        <div class="stats-card">
+          <div class="stats-title">Решил помощник</div>
+          <div class="stats-value" v-if="!statsLoading">{{ statsAssistantResolved }}</div>
+          <div v-else>Загрузка...</div>
+          <div class="stats-subtitle">по assistant_resolved_at</div>
+        </div>
 
-  <div class="stats-card">
-    <div class="stats-title">Отправлено на доработку</div>
-    <div class="stats-value" v-if="!statsLoading">{{ statsSentToRevision }}</div>
-    <div v-else>Загрузка...</div>
-    <div class="stats-subtitle">по revision_requested_at</div>
-  </div>
-</div>
+        <div class="stats-card">
+          <div class="stats-title">Отправлено на доработку</div>
+          <div class="stats-value" v-if="!statsLoading">{{ statsSentToRevision }}</div>
+          <div v-else>Загрузка...</div>
+          <div class="stats-subtitle">по revision_requested_at</div>
+        </div>
+      </div>
 
-<div class="stats-actions">
-  <div class="stats-filter">
-    <label>Показать список:</label>
-    <select v-model="statsListType" :disabled="statsLoading">
-      <option value="created">Созданные за период</option>
-      <option value="sent">Отправленные помощнику</option>
-      <option value="resolved">Решённые помощником</option>
-      <option value="revision">Отправленные на доработку</option>
-    </select>
-  </div>
+      <div class="stats-actions">
+        <div class="stats-filter">
+          <label>Показать список:</label>
+          <select v-model="statsListType" :disabled="statsLoading">
+            <option value="created">Созданные за период</option>
+            <option value="sent">Отправленные помощнику</option>
+            <option value="resolved">Решённые помощником</option>
+            <option value="revision">Отправленные на доработку</option>
+          </select>
+        </div>
 
-  <button class="apply-btn"
-          @click="toggleStatsItems"
-          :disabled="statsLoading || statsCounterByType() === 0">
-    {{ statsShowItems ? 'Скрыть заявки' : 'Показать заявки' }}
-  </button>
-</div>
+        <button class="apply-btn" @click="toggleStatsItems" :disabled="statsLoading || statsCounterByType() === 0">
+          {{ statsShowItems ? 'Скрыть заявки' : 'Показать заявки' }}
+        </button>
+      </div>
 
 
 
 
-  <div v-if="statsShowItems" class="stats-list">
-    <div class="stats-list-title"> {{ statsListTitle }}</div>
-    <div v-if="statsItems.length === 0 && !statsLoading" class="stats-empty">
-      Заявок за выбранный период нет.
-    </div>
+      <div v-if="statsShowItems" class="stats-list">
+        <div class="stats-list-title"> {{ statsListTitle }}</div>
+        <div v-if="statsItems.length === 0 && !statsLoading" class="stats-empty">
+          Заявок за выбранный период нет.
+        </div>
 
-    <table v-else class="submissions-table">
-      <thead>
-  <tr>
-    <th>ID</th>
-    <th>Дата</th>
-    <th>ФИО</th>
-    <th>Проблема</th>
-    <th>Файлы</th>
-  </tr>
-</thead>
+        <table v-else class="submissions-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Дата</th>
+              <th>ФИО</th>
+              <th>Проблема</th>
+              <th>Файлы</th>
+            </tr>
+          </thead>
 
-<tbody>
-  <tr v-for="it in statsItems" :key="it.id">
-    <td>{{ it.id }}</td>
-    <td>{{ new Date(getStatsEventDate(it)).toLocaleString() }}</td>
+          <tbody>
+            <tr v-for="it in statsItems" :key="it.id">
+              <td>{{ it.id }}</td>
+              <td>{{ new Date(getStatsEventDate(it)).toLocaleString() }}</td>
 
 
-    <td>
-      {{ [it.surname, it.name, it.patronymic].filter(Boolean).join(' ') }}
-    </td>
+              <td>
+                {{ [it.surname, it.name, it.patronymic].filter(Boolean).join(' ') }}
+              </td>
 
-    <td>
-      {{ it.problem && it.problem.length > 120 ? it.problem.substring(0, 120) + '...' : it.problem }}
-      <button class="expand-button" v-if="it.problem" @click="showFullProblem(it.problem)">Подробнее</button>
-    </td>
+              <td>
+                {{ it.problem && it.problem.length > 120 ? it.problem.substring(0, 120) + '...' : it.problem }}
+                <button class="expand-button" v-if="it.problem" @click="showFullProblem(it.problem)">Подробнее</button>
+              </td>
 
-    <td>
-      <ul v-if="parseLinks(it.file_links).length">
-        <li v-for="(f, idx) in parseLinks(it.file_links)" :key="idx">
-          <a :href="f.url" target="_blank">{{ f.name }}</a>
-        </li>
-      </ul>
-      <span v-else class="muted">—</span>
-    </td>
-  </tr>
-</tbody>
-    </table>
-  </div>
+              <td>
+                <ul v-if="parseLinks(it.file_links, it.id, 'main').length">
+                  <li v-for="(f, idx) in parseLinks(it.file_links, it.id, 'main')" :key="idx">
+                    <a :href="f.url" target="_blank">{{ f.name }}</a>
+                  </li>
+                </ul>
+                <span v-else class="muted">—</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
     </div>
 
@@ -477,7 +480,39 @@
       <p>⏳ Подождите пожалуйста, файлы отправляются...</p>
     </div>
   </div>
+  <div v-if="showCreateModal" class="modal-overlay">
+    <div class="modal-content">
+      <h2>Создать заявку</h2>
 
+      <input class="input-field" v-model="createForm.surname" placeholder="Фамилия" />
+      <input class="input-field" v-model="createForm.name" placeholder="Имя" />
+      <input class="input-field" v-model="createForm.patronymic" placeholder="Отчество" />
+      <input class="input-field" v-model="createForm.phone" placeholder="Телефон" />
+      <input class="input-field" v-model="createForm.email" placeholder="Email" />
+      <textarea class="input-field" v-model="createForm.problem" rows="5" placeholder="Проблема *"></textarea>
+
+      <div class="file-upload">
+        <label for="createFiles">📂 Выбрать файлы</label>
+        <input id="createFiles" type="file" multiple @change="handleCreateFiles" />
+        <p>Максимум 5 файлов, до 25МБ</p>
+
+        <ul>
+          <li v-for="(file, idx) in createFiles" :key="idx">
+            {{ file.name }} ({{ (file.size / 1024 / 1024).toFixed(2) }}MB)
+            <button @click="removeCreateFile(idx)">❌</button>
+          </li>
+        </ul>
+      </div>
+
+      <div class="modal-buttons">
+        <button class="submit-button" @click="submitCreateSubmission" :disabled="createLoading">
+          <span v-if="createLoading" class="loader"></span>
+          <span v-else>Создать</span>
+        </button>
+        <button class="cancel-button" @click="closeCreateModal" :disabled="createLoading">Отмена</button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -490,13 +525,23 @@ export default {
       deletedSubmissions: [],
       assistantSubmissions: [],
       resolvedSubmissions: [],
+      showCreateModal: false,
+      createLoading: false,
+      createForm: {
+        surname: '',
+        name: '',
+        patronymic: '',
+        phone: '',
+        email: '',
+        problem: ''
+      },
+      createFiles: [],
+      statsTotalCreated: 0,
+      statsSentToAssistant: 0,
+      statsAssistantResolved: 0,
+      statsSentToRevision: 0,
 
-statsTotalCreated: 0,
-statsSentToAssistant: 0,
-statsAssistantResolved: 0,
-statsSentToRevision: 0,
-
-statsListType: 'created', // created|sent|resolved|revision
+      statsListType: 'created', // created|sent|resolved|revision
 
       statsRange: {
         start: '', // YYYY-MM-DD
@@ -506,7 +551,7 @@ statsListType: 'created', // created|sent|resolved|revision
       statsLoading: false,
       statsError: '',
       statsItems: [],
-statsShowItems: false,
+      statsShowItems: false,
       isSharing: false,
 
       showModal: false,
@@ -534,13 +579,13 @@ statsShowItems: false,
     };
   },
   computed: {
-statsListTitle() {
-  if (this.statsListType === 'created') return 'Список: созданные заявки за период';
-  if (this.statsListType === 'sent') return 'Список: отправленные помощнику за период';
-  if (this.statsListType === 'resolved') return 'Список: решённые помощником за период';
-  if (this.statsListType === 'revision') return 'Список: отправленные на доработку за период';
-  return 'Список заявок';
-},
+    statsListTitle() {
+      if (this.statsListType === 'created') return 'Список: созданные заявки за период';
+      if (this.statsListType === 'sent') return 'Список: отправленные помощнику за период';
+      if (this.statsListType === 'resolved') return 'Список: решённые помощником за период';
+      if (this.statsListType === 'revision') return 'Список: отправленные на доработку за период';
+      return 'Список заявок';
+    },
     paginatedSubmissions() {
       return this.submissions.slice(
         (this.currentPage.active - 1) * this.itemsPerPage,
@@ -608,10 +653,94 @@ statsListTitle() {
   created() {
     this.fetchSubmissions();
   },
-  methods:{
+  methods: {
+openCreateModal() {
+  this.showCreateModal = true;
+},
+closeCreateModal() {
+  this.showCreateModal = false;
+  this.createLoading = false;
+  this.createForm = { surname:'', name:'', patronymic:'', phone:'', email:'', problem:'' };
+  this.createFiles = [];
+},
+handleCreateFiles(e) {
+  const files = Array.from(e.target.files || []);
+  const maxFiles = 5;
+  const maxSize = 25 * 1024 * 1024;
 
+  const merged = [...this.createFiles, ...files].slice(0, maxFiles);
 
-  
+  for (const f of merged) {
+    if (f.size > maxSize) {
+      alert('Файл не должен превышать 25MB');
+      e.target.value = null;
+      return;
+    }
+  }
+
+  this.createFiles = merged;
+  e.target.value = null;
+},
+removeCreateFile(idx) {
+  this.createFiles.splice(idx, 1);
+},
+async submitCreateSubmission() {
+  if (!this.createForm.problem) {
+    alert('Заполните поле "Проблема"');
+    return;
+  }
+
+  const fd = new FormData();
+  fd.append('surname', this.createForm.surname);
+  fd.append('name', this.createForm.name);
+  fd.append('patronymic', this.createForm.patronymic);
+  fd.append('phone', this.createForm.phone);
+  fd.append('email', this.createForm.email);
+  fd.append('problem', this.createForm.problem);
+
+  this.createFiles.forEach(f => fd.append('files[]', f));
+
+  try {
+    this.createLoading = true;
+
+    const r = await fetch('/create_submission.php', {
+      method: 'POST',
+      body: fd,
+      credentials: 'include'
+    });
+
+    const data = await r.json();
+
+    if (!data.success) {
+      alert('Ошибка: ' + (data.message || 'неизвестно'));
+      return;
+    }
+
+    alert('Заявка создана. ID: ' + data.id);
+
+    this.closeCreateModal();
+    this.activeTab = 'active';
+    this.currentPage.active = 1;
+    this.fetchSubmissions();
+  } catch (e) {
+    console.error(e);
+    alert('Ошибка связи с сервером');
+  } finally {
+    this.createLoading = false;
+  }
+},
+    getAllFiles(submission) {
+      const main = this.parseLinks(submission.file_links, submission.id, 'main');
+      const rev = this.parseLinks(submission.revision_files, submission.id, 'revision');
+      const ans = this.parseLinks(submission.answer_files, submission.id, 'answer');
+
+      const map = new Map();
+      [...main, ...rev, ...ans].forEach(f => {
+        if (f?.url && !map.has(f.url)) map.set(f.url, f);
+      });
+      return Array.from(map.values());
+    },
+
     // Открытие модального окна
     openRevisionModal(submissionId) {
       this.currentSubmissionId = submissionId;
@@ -724,118 +853,118 @@ statsListTitle() {
       this.statsRange.start = toDateInput(start);
       this.statsRange.end = toDateInput(end);
     },
-async toggleStatsItems() {
-  if (this.statsShowItems) {
-    this.statsShowItems = false;
-    this.statsItems = [];
-    return;
-  }
+    async toggleStatsItems() {
+      if (this.statsShowItems) {
+        this.statsShowItems = false;
+        this.statsItems = [];
+        return;
+      }
 
-  await this.fetchStatsItems();
-  this.statsShowItems = true;
-},
-async fetchStatsItems() {
-  try {
-    this.statsLoading = true;
-    this.statsError = '';
+      await this.fetchStatsItems();
+      this.statsShowItems = true;
+    },
+    async fetchStatsItems() {
+      try {
+        this.statsLoading = true;
+        this.statsError = '';
 
-    if (!this.statsRange.start || !this.statsRange.end) {
-      this.statsError = 'Укажите период (дата с / дата по).';
-      return;
-    }
-    if (this.statsRange.start > this.statsRange.end) {
-      this.statsError = 'Дата "с" не может быть больше даты "по".';
-      return;
-    }
+        if (!this.statsRange.start || !this.statsRange.end) {
+          this.statsError = 'Укажите период (дата с / дата по).';
+          return;
+        }
+        if (this.statsRange.start > this.statsRange.end) {
+          this.statsError = 'Дата "с" не может быть больше даты "по".';
+          return;
+        }
 
-    const params = new URLSearchParams({
-      start: this.statsRange.start,
-      end: this.statsRange.end,
-      items: '1',
-      list: this.statsListType
-    });
+        const params = new URLSearchParams({
+          start: this.statsRange.start,
+          end: this.statsRange.end,
+          items: '1',
+          list: this.statsListType
+        });
 
-    const response = await fetch(`/get_statistics.php?${params.toString()}`, {
-      credentials: 'include'
-    });
+        const response = await fetch(`/get_statistics.php?${params.toString()}`, {
+          credentials: 'include'
+        });
 
-    const data = await response.json();
-    if (!data.success) {
-      this.statsError = data.message || 'Ошибка получения статистики';
-      return;
-    }
+        const data = await response.json();
+        if (!data.success) {
+          this.statsError = data.message || 'Ошибка получения статистики';
+          return;
+        }
 
-    this.statsItems = Array.isArray(data.items) ? data.items : [];
+        this.statsItems = Array.isArray(data.items) ? data.items : [];
 
-  } catch (e) {
-    console.error(e);
-    this.statsError = 'Ошибка связи с сервером';
-  } finally {
-    this.statsLoading = false;
-  }
-},
+      } catch (e) {
+        console.error(e);
+        this.statsError = 'Ошибка связи с сервером';
+      } finally {
+        this.statsLoading = false;
+      }
+    },
     async fetchStats() {
-  try {
-    this.statsLoading = true;
-    this.statsError = '';
+      try {
+        this.statsLoading = true;
+        this.statsError = '';
 
-    if (!this.statsRange.start || !this.statsRange.end) {
-      this.statsError = 'Укажите период (дата с / дата по).';
-      return;
-    }
-    if (this.statsRange.start > this.statsRange.end) {
-      this.statsError = 'Дата "с" не может быть больше даты "по".';
-      return;
-    }
+        if (!this.statsRange.start || !this.statsRange.end) {
+          this.statsError = 'Укажите период (дата с / дата по).';
+          return;
+        }
+        if (this.statsRange.start > this.statsRange.end) {
+          this.statsError = 'Дата "с" не может быть больше даты "по".';
+          return;
+        }
 
-    const params = new URLSearchParams({
-      start: this.statsRange.start,
-      end: this.statsRange.end
-    });
+        const params = new URLSearchParams({
+          start: this.statsRange.start,
+          end: this.statsRange.end
+        });
 
-    const response = await fetch(`/get_statistics.php?${params.toString()}`, {
-      credentials: 'include'
-    });
+        const response = await fetch(`/get_statistics.php?${params.toString()}`, {
+          credentials: 'include'
+        });
 
-    const data = await response.json();
-    if (!data.success) {
-      this.statsError = data.message || 'Ошибка получения статистики';
-      return;
-    }
+        const data = await response.json();
+        if (!data.success) {
+          this.statsError = data.message || 'Ошибка получения статистики';
+          return;
+        }
 
-    // новые метрики
-    this.statsTotalCreated = Number(data.total_created || 0);
-    this.statsSentToAssistant = Number(data.sent_to_assistant || 0);
-    this.statsAssistantResolved = Number(data.assistant_resolved || 0);
-    this.statsSentToRevision = Number(data.sent_to_revision || 0);
+        // новые метрики
+        this.statsTotalCreated = Number(data.total_created || 0);
+        this.statsSentToAssistant = Number(data.sent_to_assistant || 0);
+        this.statsAssistantResolved = Number(data.assistant_resolved || 0);
+        this.statsSentToRevision = Number(data.sent_to_revision || 0);
 
-    // сброс списка
-    this.statsShowItems = false;
-    this.statsItems = [];
+        // сброс списка
+        this.statsShowItems = false;
+        this.statsItems = [];
 
-  } catch (e) {
-    console.error(e);
-    this.statsError = 'Ошибка связи с сервером';
-  } finally {
-    this.statsLoading = false;
-  }
-},
+      } catch (e) {
+        console.error(e);
+        this.statsError = 'Ошибка связи с сервером';
+      } finally {
+        this.statsLoading = false;
+      }
+    },
 
-statsCounterByType() {
-  if (this.statsListType === 'created') return this.statsTotalCreated;
-  if (this.statsListType === 'sent') return this.statsSentToAssistant;
-  if (this.statsListType === 'resolved') return this.statsAssistantResolved;
-  if (this.statsListType === 'revision') return this.statsSentToRevision;
-  return 0;
-},
+    statsCounterByType() {
+      if (this.statsListType === 'created') return this.statsTotalCreated;
+      if (this.statsListType === 'sent') return this.statsSentToAssistant;
+      if (this.statsListType === 'resolved') return this.statsAssistantResolved;
+      if (this.statsListType === 'revision') return this.statsSentToRevision;
+      return 0;
+    },
 
-getStatsEventDate(it) {
-  if (this.statsListType === 'created') return it.created_at;
-  if (this.statsListType === 'sent') return it.assistant_sent_at;
-  if (this.statsListType === 'resolved') return it.assistant_resolved_at;
-  if (this.statsListType === 'revision') return it.revision_requested_at;
-  return it.created_at;
-},
+    getStatsEventDate(it) {
+      if (this.statsListType === 'created') return it.created_at;
+      if (this.statsListType === 'sent') return it.assistant_sent_at;
+      if (this.statsListType === 'resolved') return it.assistant_resolved_at;
+      if (this.statsListType === 'revision') return it.revision_requested_at;
+      return it.created_at;
+    },
 
     formatDuration(diffMs) {
       if (!diffMs || diffMs < 0) return '—';
@@ -919,57 +1048,34 @@ getStatsEventDate(it) {
       this.fetchSubmissions();
     },
 
-    parseLinks(fileLinks) {
+    parseLinks(fileLinks, submissionId, kind = 'main') {
       try {
-        console.log('file_links перед парсингом:', fileLinks);
+        if (!fileLinks || fileLinks === 'NULL' || fileLinks === '' || typeof fileLinks === 'undefined') return [];
 
-        // Проверка на пустое или некорректное значение
-        if (!fileLinks || fileLinks === 'NULL' || fileLinks === '' || typeof fileLinks === 'undefined') {
-          console.warn('file_links пустое, NULL или неопределено');
-          return [];
-        }
+        // Нормализуем: если пришло строкой — парсим JSON, если уже массив — используем как есть
+        const links = (typeof fileLinks === 'string') ? JSON.parse(fileLinks) : fileLinks;
+        if (!Array.isArray(links) || links.length === 0) return [];
 
-        // Если уже массив объектов с url и name, возвращаем напрямую
-        if (Array.isArray(fileLinks) && fileLinks[0]?.url && fileLinks[0]?.name) {
-          console.log('✅ fileLinks уже содержит объекты с url и name:', fileLinks);
-          return fileLinks;
-        }
-
-        // Если уже массив строк, преобразуем в объекты
-        if (Array.isArray(fileLinks) && typeof fileLinks[0] === 'string') {
-          console.log('✅ fileLinks уже является массивом строк:', fileLinks);
-          return fileLinks.map(link => ({
-            url: link,
-            name: link.split('/').pop()
+        // Новый формат: {id,name,path}
+        if (links[0]?.id && links[0]?.name) {
+          if (!submissionId) return [];
+          return links.map(f => ({
+            name: f.name,
+            url: `/download_file.php?submission_id=${encodeURIComponent(submissionId)}&file_id=${encodeURIComponent(f.id)}&kind=${encodeURIComponent(kind)}`
           }));
         }
 
-        // Если fileLinks — строка, пытаемся распарсить как JSON
-        if (typeof fileLinks === 'string') {
-          console.log('📦 Попытка парсинга JSON строки:', fileLinks);
-          const links = JSON.parse(fileLinks);
+        // Старый формат: {url,name}
+        if (links[0]?.url && links[0]?.name) return links;
 
-          // Если получили массив строк после парсинга
-          if (Array.isArray(links) && typeof links[0] === 'string') {
-            return links.map(link => ({
-              url: link,
-              name: link.split('/').pop()
-            }));
-          }
-
-          // Если получили массив объектов после парсинга
-          if (Array.isArray(links) && links[0]?.url && links[0]?.name) {
-            return links;
-          }
-
-          console.warn('🚫 Полученные данные после парсинга не соответствуют ожидаемому формату:', links);
-          return [];
+        // Массив строк-ссылок
+        if (typeof links[0] === 'string') {
+          return links.map(u => ({ url: u, name: u.split('/').pop() }));
         }
 
-        console.warn('🚫 Неизвестный формат данных для fileLinks:', fileLinks);
         return [];
       } catch (e) {
-        console.error('🛑 Ошибка парсинга ссылок на файлы:', e, 'Исходное значение:', fileLinks);
+        console.error('parseLinks error', e, fileLinks);
         return [];
       }
     }
@@ -1125,12 +1231,13 @@ td ul li a {
 td ul li a:hover {
   text-decoration: underline;
 }
+
 .stats-list {
   margin-top: 15px;
   background: #fff;
   border-radius: 10px;
   padding: 15px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
 }
 
 .stats-items {
@@ -1153,6 +1260,85 @@ td ul li a:hover {
 
 .small {
   font-size: 12px;
+}
+
+.submissions-table th.allfiles-header {
+  width: 170px;
+  /* ширина колонки */
+  max-width: 170px;
+  background-color: #1e88e5;
+  /* цвет шапки */
+  color: #fff;
+  text-align: center;
+}
+
+.submissions-table td.allfiles-cell {
+  width: 170px;
+  max-width: 170px;
+  background: #eef6ff;
+  /* фон ячеек */
+  font-size: 12px;
+  /* меньше текст */
+  line-height: 1.2;
+  overflow: hidden;
+}
+.header-row{
+  position: relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.create-btn{
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 22px;
+  line-height: 1;
+  color: #fff;
+
+  /* базовый вид */
+  background: linear-gradient(145deg, #b12a2a, #7a1515);
+  box-shadow:
+    0 10px 22px rgba(138, 31, 31, 0.35),
+    0 2px 6px rgba(0, 0, 0, 0.25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.create-btn:hover{
+  transform: translateY(-1px) scale(1.03);
+  filter: brightness(1.06);
+  box-shadow:
+    0 14px 28px rgba(138, 31, 31, 0.45),
+    0 4px 10px rgba(0, 0, 0, 0.28);
+}
+
+.submissions-table td.allfiles-cell ul {
+  padding-left: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.submissions-table td.allfiles-cell li {
+  margin: 0 0 6px 0;
+}
+
+/* чтобы длинные имена файлов не раздували колонку */
+.submissions-table td.allfiles-cell a {
+  display: inline-block;
+  max-width: 160px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .problem-text {
@@ -1671,6 +1857,7 @@ p {
   cursor: pointer;
   font-size: 14px;
 }
+
 .stats-actions {
   margin-top: 14px;
   display: flex;

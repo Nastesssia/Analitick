@@ -1,0 +1,8 @@
+
+# из папки проекта
+Remove-Item -Recurse -Force node_modules
+Remove-Item -Force package-lock.json
+
+npm cache clean --force
+npm install
+npm run dev
