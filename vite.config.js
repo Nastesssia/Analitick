@@ -11,7 +11,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: fileURLToPath(new URL('./index.html', import.meta.url)),
-        politic: fileURLToPath(new URL('./politic.html', import.meta.url))
+
       }
     }
   },

@@ -70,7 +70,7 @@
 
     <div class="politic">
       <div class="extra-info">
-        <p class="company-title">АНАЛИТИКГРУПП:</p>
+       
         <p>
           ООО Юридическое Бюро «АналитикГрупп»<br>
           ИНН 7842456478<br>
