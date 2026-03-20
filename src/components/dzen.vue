@@ -49,11 +49,15 @@ export default {
 .logo-container:hover img {
   transform: scale(1.1);
 }
-
 .container {
-  box-shadow: 0px 0.5vw 2.5vw rgba(0, 0, 0, 0.3); /* Пропорциональная тень */
+  box-shadow: 0px 0.5vw 2.5vw rgba(0, 0, 0, 0.3);
   height: 20vw;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+ 
 }
 
 .container:hover {

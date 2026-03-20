@@ -11,9 +11,21 @@
         </div>
 
         <div class="icons">
-          <a :href="telegramLink"><img draggable="false" :src="tgIcon" alt="telegram"></a>
-          <a :href="emailLink"><img draggable="false" :src="emailIcon" alt="email"></a>
-          <a :href="whatsappLink"><img draggable="false" :src="waIcon" alt="WhatsApp"></a>
+          <a :href="telegramLink" target="_blank" rel="noopener noreferrer">
+            <img draggable="false" :src="tgIcon" alt="telegram">
+          </a>
+
+          <a :href="vkLink" target="_blank" rel="noopener noreferrer">
+            <img draggable="false" :src="vkIcon" alt="vk">
+          </a>
+
+          <a :href="maxLink" target="_blank" rel="noopener noreferrer">
+            <img draggable="false" :src="maxIcon" alt="max">
+          </a>
+
+          <a :href="emailLink">
+            <img draggable="false" :src="emailIcon" alt="email">
+          </a>
         </div>
 
         <div class="numbers">
@@ -22,29 +34,70 @@
       </div>
       <div class="push">
         <h2>Оставьте свой телефон и мы <br> перезвоним вам</h2>
+
         <input type="text" @input="formatPhone" placeholder="Телефон" v-mask="'+7 (###) ###-####'" v-model="phone"
           required maxlength="20">
-        <button type="button" @click="submit">Отправить</button>
-        <!-- Сообщение об отправке -->
+
+        <label class="footer-consent-label">
+          <input type="checkbox" v-model="footerConsentAccepted" class="footer-consent-checkbox"
+            @change="footerAgreementError = false">
+
+          <span class="footer-consent-text">
+            Я ознакомлен(а) и даю согласие на обработку персональных данных в соответствии с
+            <router-link to="/personal-data-consent" class="footer-consent-link">
+              Согласием на обработку персональных данных
+            </router-link>
+            и
+            <router-link to="/privacy-policy" class="footer-consent-link">
+              Политикой конфиденциальности
+            </router-link>.
+          
+          </span>
+        </label>
+
+        <p v-if="footerAgreementError" class="footer-agreement-error">
+          Для отправки телефона подтвердите согласие.
+        </p>
+
+        <button type="button" @click="submit" :disabled="isSending || !footerConsentAccepted"
+          :class="{ disabledButton: isSending || !footerConsentAccepted }">
+          Отправить
+        </button>
+
         <div v-if="isSending" class="sending-message">Сообщение отправляется...</div>
       </div>
     </div>
 
     <div class="politic">
-      <!-- Блок с информацией об организации -->
       <div class="extra-info">
-        <p>ООО Юридическое Бюро «АналитикГрупп» <br>ИНН 7842456478
-          <br> 236003, Калининградская обл., г. Калининград,
-          <br>ул. Дачная, д. 8, апарт 6
+        <p class="company-title">АНАЛИТИКГРУПП:</p>
+        <p>
+          ООО Юридическое Бюро «АналитикГрупп»<br>
+          ИНН 7842456478<br>
+          ОГРН 1117847296379<br>
+          236003, Калининградская обл., г. Калининград,<br>
+          ул. Дачная, д. 8, апарт 6
         </p>
-
       </div>
 
-      <!-- Существующий контент с копирайтом и ссылками -->
       <div class="copyright">
-        <p>COPYRIGHT © 2011-2024. <br> ВСЕ ПРАВА ЗАЩИЩЕНЫ</p> <br>
-        <a class="konf" href="politic.html">ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ</a><br>
-        <a class="freepik" href="https://ru.freepik.com/">ИЗОБРАЖЕНИЯ ВЗЯТЫ С FREEPIK</a>
+        <p>COPYRIGHT © 2011-2026.</p>
+
+        <router-link class="konf" to="/privacy-policy">
+          ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ
+        </router-link>
+
+        <router-link class="konf" to="/personal-data-consent">
+          СОГЛАСИЕ НА ОБРАБОТКУ ПЕРСОНАЛЬНЫХ ДАННЫХ
+        </router-link>
+
+        <router-link class="konf" to="/user-agreement">
+          ПОЛЬЗОВАТЕЛЬСКОЕ СОГЛАШЕНИЕ
+        </router-link>
+
+        <a class="freepik" href="https://ru.freepik.com/" target="_blank" rel="noopener noreferrer">
+          ИЗОБРАЖЕНИЯ ВЗЯТЫ С FREEPIK
+        </a>
       </div>
     </div>
 
@@ -64,19 +117,26 @@ export default {
     return {
       phone: '',
       phoneFormatted: false,
-      footerLogo: "src/assets/footer/footer_logo.png",
-      telegramLink: "https://web.telegram.org/k/#@KabanovAleksandr",
+      footerLogo: new URL('../assets/footer/footer_logo.png', import.meta.url).href,
+
+      telegramLink: "https://t.me/KabanovAleksandr",
+      vkLink: "https://vk.com/club211811207",
+      maxLink: "https://max.ru/u/f9LHodD0cOIF3crhBTHF5EJRr405FnKCc6BAH1CHx7mJsiQz0B9YcYW8Hvk",
       emailLink: "mailto:i@aleksandr-kabanov.ru",
-      whatsappLink: "https://api.whatsapp.com/send?phone=79052480447",
-      tgIcon: "src/assets/footer/tg_icon_white.svg",
-      emailIcon: "src/assets/footer/email_icon_white.svg",
-      waIcon: "src/assets/footer/wa_icon_white.svg",
+
+      tgIcon: new URL('../assets/footer/tg_icon_white.svg', import.meta.url).href,
+      vkIcon: new URL('../assets/footer/icon-vk.svg', import.meta.url).href,
+      maxIcon: new URL('../assets/footer/icon-max.svg', import.meta.url).href,
+      emailIcon: new URL('../assets/footer/email_icon_white.svg', import.meta.url).href,
+
       homeLink: "#upsection",
       aboutLink: "#info",
       servicesLink: "#service",
       contactsLink: "#contacts",
       phoneNumber: "+7 (4012) 37-72-97",
-      isSending: false
+      isSending: false,
+      footerConsentAccepted: false,
+      footerAgreementError: false
     };
   },
   mounted() {
@@ -115,6 +175,12 @@ export default {
         return;
       }
 
+      if (!this.footerConsentAccepted) {
+        this.footerAgreementError = true;
+        alert('Подтвердите согласие на обработку персональных данных');
+        return;
+      }
+
       this.isSending = true;
       const formData = new FormData();
       formData.append('phone', this.phone);
@@ -123,12 +189,17 @@ export default {
         .then(response => {
           this.isSending = false;
           console.log('Response:', response.data);
+          this.phone = '';
+          this.footerConsentAccepted = false;
+          this.footerAgreementError = false;
           alert('Телефон успешно отправлен');
         })
         .catch(error => {
           this.isSending = false;
           console.error('Error:', error);
-          // Display a success message even when there's an error
+          this.phone = '';
+          this.footerConsentAccepted = false;
+          this.footerAgreementError = false;
           alert('Телефон успешно отправлен, несмотря на ошибку. Мы уже получили ваши данные!');
         });
     }
@@ -176,18 +247,73 @@ export default {
   /* анимация при изменении цвета текста */
 }
 
-.copyright  {
- text-align: right;
+.copyright {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
 }
+
 .copyright p {
   margin: 0;
+}
+
+.company-title {
+  font-weight: 700;
+  color: white !important;
+  margin-bottom: 10px !important;
+  letter-spacing: 0.5px;
 }
 
 .href a:hover {
   color: #970E0E;
   /* изменение цвета текста при наведении */
 }
+.footer-consent-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 14px;
+  max-width: 500px;
+  text-align: left;
+}
 
+.footer-consent-checkbox {
+  margin-top: 3px;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: #970e0e;
+}
+
+.footer-consent-text {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.8vw;
+  line-height: 1.5;
+}
+
+.footer-consent-link {
+  color: white;
+  text-decoration: underline;
+}
+
+.footer-consent-link:hover {
+  color: #d7d7d7;
+}
+
+.footer-agreement-error {
+  color: #ff9a9a;
+  font-size: 0.75vw;
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
+.disabledButton {
+  opacity: 0.6;
+  cursor: not-allowed !important;
+}
 .numbers a {
   color: white;
   text-decoration: none;
@@ -207,14 +333,20 @@ footer {
   background-color: #3F3F3F;
 }
 
-.icons img {
+.icons {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   margin-top: 50px;
+}
+
+.icons img {
   cursor: pointer;
-  height: auto;
-  width: 25%;
-  margin-right: 10px;
+  width: 36px;
+  height: 36px;
+  margin-top: 0;
+  margin-right: 0;
   transition: transform 0.3s;
-  /* анимация при изменении масштаба */
 }
 
 .icons img:hover {
@@ -242,6 +374,7 @@ footer {
   text-decoration: none;
   text-transform: uppercase;
   font-size: 1vw;
+  display: block;
 }
 
 .politic a:hover {
@@ -250,11 +383,12 @@ footer {
 
 .politic {
   display: flex;
-  justify-content: space-between; /* развести блоки по краям */
-  align-items: center;           /* выровнять по вертикали */
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 40px;
   background-color: #363636;
-  padding-left: 100px;
-  padding-right: 100px;
+  padding: 30px 100px;
+  box-sizing: border-box;
 }
 
 
@@ -263,6 +397,7 @@ footer {
   text-decoration: none;
   text-transform: uppercase;
   font-size: 1vw;
+  display: block;
 }
 
 .push {
@@ -284,6 +419,7 @@ input {
   height: 50px;
   width: 160px;
   color: white;
+  margin-top: 20px;
   border-radius: 10px;
   border: solid 2px white;
   margin-left: 10px;
@@ -293,9 +429,9 @@ input {
 
 
 
- .extra-info p{
-   margin: 0;
-  }
+.extra-info p {
+  margin: 0;
+}
 
 .push button:hover {
   background-color: white;
@@ -326,9 +462,7 @@ input {
     margin: 0;
   }
 
-  .extra-info {
-    width: 15px;
-  }
+
 
   .paraweb-logo {
     margin-top: 5px;
@@ -378,22 +512,20 @@ input {
     /* анимация при изменении цвета текста */
   }
 
-  .icons img {
-    margin-top: 30px;
-    /* Уменьшаем отступ сверху */
-    cursor: pointer;
-    height: auto;
-    width: 70%;
-    /* Увеличиваем ширину иконок */
-    margin-right: 0;
-    transition: transform 0.3s;
-  }
-
   .icons {
     display: flex;
-    justify-content: center;
-    margin-left: 10px;
-    margin-right: 10px;
+    align-items: center;
+    gap: 14px;
+    margin-top: 50px;
+  }
+
+  .icons img {
+    cursor: pointer;
+    height: 36px;
+    width: 36px;
+    margin-right: 0;
+    margin-top: 0;
+    transition: transform 0.3s;
   }
 
   .numbers {
@@ -423,9 +555,7 @@ input {
 
 
 
-  .politic {
-    height: 70px;
-  }
+
 
   .numbers a {
     font-size: 3vw;
@@ -436,35 +566,34 @@ input {
     width: 75px;
     font-size: 10px;
   }
+
   .politic {
-    padding: 20px;            /* отступы */
-    height: auto;             /* убираем фиксированную высоту */
+    padding: 20px;
+    /* отступы */
+    height: auto;
+    /* убираем фиксированную высоту */
   }
 
-  .extra-info {
-    margin-bottom: 15px;
-  }
 
-  .extra-info p {
-    font-size: 3vw;           /* текст чуть крупнее */
-    line-height: 1.4;
-    width: 100px;
-    margin: 0;
-    padding: 0;
-  }
 
-  .copyright {
-  }
+ .extra-info p {
+  font-size: 3vw;
+  line-height: 1.4;
+  width: auto;
+  margin: 0;
+  padding: 0;
+}
+
+  .copyright {}
 
   .copyright p {
     font-size: 3vw;
   }
 
   .politic a {
-    display: block;           /* каждую ссылку с новой строки */
+    display: block;
+    /* каждую ссылку с новой строки */
     font-size: 2.5vw;
   }
 }
-
-
 </style>

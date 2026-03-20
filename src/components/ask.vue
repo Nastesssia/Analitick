@@ -50,13 +50,36 @@
         </div>
       </form>
       <div class="politic">
-        <p class="politic_text">
-          Нажимая кнопку отправить, вы выражаете согласие на передачу и
-          обработку <br />
-          персональных данных в соответствии с
-          <a href="politic.html" style="text-decoration: underline; color: #3d210b">политикой конфиденциальности</a>.
+        <label class="consent-label">
+          <input type="checkbox" v-model="formConsentAccepted" class="consent-checkbox"
+            @change="agreementError = false" />
+
+          <span class="politic_text">
+            Я ознакомлен(а) и даю согласие на обработку персональных данных в соответствии с
+            <router-link to="/personal-data-consent" class="politic_link">
+              Согласием на обработку персональных данных
+            </router-link>
+            и
+            <router-link to="/privacy-policy" class="politic_link">
+              Политикой конфиденциальности
+            </router-link>.
+
+            Прикрепляя документы, вы подтверждаете, что вправе передавать содержащиеся в них сведения и что они
+            необходимы для рассмотрения вашего обращения.
+
+            Также действует
+            <router-link to="/user-agreement" class="politic_link">
+              Пользовательское соглашение
+            </router-link>.
+          </span>
+        </label>
+
+        <p v-if="agreementError" class="agreement-error">
+          Для отправки заявки необходимо подтвердить согласие.
         </p>
-        <button @click="sendFormData" :disabled="isLoading">
+
+        <button @click="sendFormData" :disabled="isLoading || !formConsentAccepted"
+          :class="{ disabledButton: isLoading || !formConsentAccepted }">
           {{ buttonText }}
         </button>
       </div>
@@ -104,6 +127,8 @@ export default {
       email: "",
       problem: "",
       alert: { show: false, message: "", type: "error" },
+      formConsentAccepted: false,
+      agreementError: false,
     };
   },
   methods: {
@@ -137,6 +162,13 @@ export default {
       }
     },
     sendFormData() {
+
+      if (!this.formConsentAccepted) {
+        this.agreementError = true;
+        this.showAlert("Подтвердите согласие на обработку персональных данных.", "error");
+        return;
+      }
+
       if (!this.surname || !this.name || !this.email || !this.problem || !this.phone || !this.patronymic) {
         this.showAlert(
           "Заполните все обязательные поля: Фамилия, Имя, Email, Проблема, Телефон, Отчество",
@@ -210,6 +242,8 @@ export default {
       this.email = "";
       this.problem = "";
       this.fileList = [];
+      this.formConsentAccepted = false;
+      this.agreementError = false;
     },
     removeFile(index) {
       this.fileList.splice(index, 1);
@@ -218,7 +252,8 @@ export default {
 };
 </script>
 
-<style>
+
+<style scoped>
 body {
   color: #3d210b;
   margin: 0;
@@ -468,6 +503,47 @@ body {
 
 .politic {
   padding: 10px;
+  width: 100%;
+  max-width: 530px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.consent-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
+}
+
+.consent-checkbox {
+  margin-top: 4px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: #970e0e;
+}
+
+.politic_link {
+  text-decoration: underline;
+  color: #3d210b;
+}
+
+.politic_link:hover {
+  color: #970e0e;
+}
+
+.agreement-error {
+  color: #970e0e;
+  font-size: 0.75vw;
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
+.disabledButton {
+  opacity: 0.6;
+  cursor: not-allowed !important;
 }
 
 .politic button {
@@ -492,6 +568,15 @@ body {
   .container {
     flex-direction: column;
     align-items: center;
+  }
+
+  .consent-checkbox {
+    width: 16px;
+    height: 16px;
+  }
+
+  .agreement-error {
+    font-size: 2.4vw;
   }
 
   .file-list {

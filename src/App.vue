@@ -1,6 +1,6 @@
 <template>
   <div id="App">
-    <div v-if="!['/login', '/lawyer', '/assistant'].includes($route.path)">
+   <div v-if="isHomeRoute">
       <input class="side-menu" type="checkbox" id="side-menu" />
       <label class="hamb" for="side-menu"><span class="hamb-line"></span></label>
 
@@ -47,7 +47,8 @@
       <footername />
       <div class="none"></div>
     </div>
-    <router-view v-if="['/login', '/lawyer', '/assistant'].includes($route.path)" />
+    <router-view v-else />
+    <CookieConsent />
   </div>
 </template>
 
@@ -60,7 +61,7 @@ import dzen from "./components/dzen.vue";
 import news from "./components/news.vue";
 import contacts from "./components/contacts.vue";
 import footername from "./components/footername.vue";
-
+import CookieConsent from "./components/CookieConsent.vue";
 export default {
   components: {
     info,
@@ -68,10 +69,16 @@ export default {
     entity,
     ask,
     dzen,
+    CookieConsent,
     // news,
     contacts,
     footername,
   },
+  computed: {
+  isHomeRoute() {
+    return this.$route.path === '/';
+  },
+},
   methods: {
     scrollToSection(sectionId) {
       const sectionElement = document.querySelector(sectionId);
@@ -96,7 +103,7 @@ export default {
 };
 </script>
 
-<style>
+<style >
 @import url("https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap");
 
 body {
