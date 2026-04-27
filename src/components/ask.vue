@@ -99,6 +99,36 @@
 import axios from "axios";
 import validator from "validator";
 import { mask } from "vue-the-mask";
+import RuCensor from "russian-bad-word-censor";
+
+const badWordCensor = new RuCensor("strict");
+
+const CENSOR_REPLACEMENT = "[удалено]";
+
+const BLOCKED_ROOTS = [
+  "путин",
+  "медведев",
+  "песков",
+  "лавров",
+  "мишустин",
+  "собянин",
+  "навальн",
+  "жириновск",
+  "зеленск",
+  "лукашенк",
+  "байден",
+  "трамп",
+  "венесуэл",
+  "росси",
+  "украин",
+  "сша",
+  "нато",
+  "кремл",
+];
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 export default {
   directives: {
@@ -132,6 +162,36 @@ export default {
     };
   },
   methods: {
+    containsBlockedRoots(text) {
+      const value = String(text || "");
+
+      return BLOCKED_ROOTS.some((root) => {
+        const escapedRoot = escapeRegExp(root);
+
+        const pattern = new RegExp(
+          `(^|[^а-яёa-z0-9_])(${escapedRoot}[а-яёa-z]*)($|[^а-яёa-z0-9_])`,
+          "giu"
+        );
+
+        return pattern.test(value);
+      });
+    },
+
+    containsBadWords(text) {
+      const value = String(text || "").trim();
+
+      if (!value) {
+        return false;
+      }
+
+      const censoredValue = badWordCensor.replace(value, CENSOR_REPLACEMENT);
+
+      return censoredValue !== value;
+    },
+
+    containsForbiddenText(text) {
+      return this.containsBadWords(text) || this.containsBlockedRoots(text);
+    },
     handleFileUpload(event) {
       const files = event.target.files;
 
@@ -180,7 +240,17 @@ export default {
         this.showAlert("Введите корректный электронный адрес.", "error");
         return;
       }
+
+      if (this.containsForbiddenText(this.problem)) {
+        this.showAlert(
+          "Заявка не может быть отправлена: описание содержит запрещённые слова или упоминания.",
+          "error"
+        );
+        return;
+      }
+
       this.isLoading = true;
+
       const formData = new FormData();
       formData.append("surname", this.surname);
       formData.append("name", this.name);
