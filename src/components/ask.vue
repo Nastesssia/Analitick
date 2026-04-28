@@ -99,11 +99,6 @@
 import axios from "axios";
 import validator from "validator";
 import { mask } from "vue-the-mask";
-import RuCensor from "russian-bad-word-censor";
-
-const badWordCensor = new RuCensor("strict");
-
-const CENSOR_REPLACEMENT = "[удалено]";
 
 const BLOCKED_ROOTS = [
   "путин",
@@ -116,14 +111,16 @@ const BLOCKED_ROOTS = [
   "жириновск",
   "зеленск",
   "лукашенк",
-  "байден",
   "трамп",
+  "макрон",
+  "меркель",
+  "эрдоган",
   "венесуэл",
-  "росси",
   "украин",
-  "сша",
-  "нато",
   "кремл",
+  "госдум",
+  "президент",
+  "войн",
 ];
 
 function escapeRegExp(value) {
@@ -177,21 +174,10 @@ export default {
       });
     },
 
-    containsBadWords(text) {
-      const value = String(text || "").trim();
-
-      if (!value) {
-        return false;
-      }
-
-      const censoredValue = badWordCensor.replace(value, CENSOR_REPLACEMENT);
-
-      return censoredValue !== value;
-    },
-
     containsForbiddenText(text) {
-      return this.containsBadWords(text) || this.containsBlockedRoots(text);
+      return this.containsBlockedRoots(text);
     },
+
     handleFileUpload(event) {
       const files = event.target.files;
 
@@ -212,7 +198,9 @@ export default {
           file: file,
           isLoading: true,
         };
+
         this.fileList.push(fileWithStatus);
+
         setTimeout(() => {
           const index = this.fileList.indexOf(fileWithStatus);
           if (index !== -1) {
@@ -221,8 +209,8 @@ export default {
         }, 1500);
       }
     },
-    sendFormData() {
 
+    sendFormData() {
       if (!this.formConsentAccepted) {
         this.agreementError = true;
         this.showAlert("Подтвердите согласие на обработку персональных данных.", "error");
@@ -236,6 +224,7 @@ export default {
         );
         return;
       }
+
       if (!validator.isEmail(this.email)) {
         this.showAlert("Введите корректный электронный адрес.", "error");
         return;
@@ -243,7 +232,7 @@ export default {
 
       if (this.containsForbiddenText(this.problem)) {
         this.showAlert(
-          "Заявка не может быть отправлена: описание содержит запрещённые слова или упоминания.",
+          "Заявка не может быть отправлена: описание содержит запрещённое упоминание.",
           "error"
         );
         return;
@@ -258,9 +247,11 @@ export default {
       formData.append("phone", this.phone);
       formData.append("email", this.email);
       formData.append("problem", this.problem);
+
       this.fileList.forEach((file) => {
         formData.append("files[]", file.file);
       });
+
       axios
         .post("https://analitikgroup.ru/send-email.php", formData)
         .then(() => {
@@ -278,6 +269,7 @@ export default {
           this.isLoading = false;
         });
     },
+
     disableSubmitButton() {
       this.isLoading = true;
       this.buttonText = "Заявка отправлена!";
@@ -286,6 +278,7 @@ export default {
         this.isLoading = false;
       }, 30000);
     },
+
     formatPhone() {
       const firstPart = "+7 (8";
       if (this.phone.startsWith(firstPart) && !this.phoneFormatted) {
@@ -293,6 +286,7 @@ export default {
         this.phoneFormatted = true;
       }
     },
+
     showAlert(message, type) {
       this.alert.message = message;
       this.alert.type = type;
@@ -301,9 +295,11 @@ export default {
         this.alert.show = false;
       }, 5000);
     },
+
     closeAlert() {
       this.alert.show = false;
     },
+
     resetForm() {
       this.surname = "";
       this.name = "";
@@ -315,6 +311,7 @@ export default {
       this.formConsentAccepted = false;
       this.agreementError = false;
     },
+
     removeFile(index) {
       this.fileList.splice(index, 1);
     },
