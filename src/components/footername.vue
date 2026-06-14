@@ -51,7 +51,7 @@
             <router-link to="/privacy-policy" class="footer-consent-link">
               Политикой конфиденциальности
             </router-link>.
-          
+
           </span>
         </label>
 
@@ -70,7 +70,7 @@
 
     <div class="politic">
       <div class="extra-info">
-       
+
         <p>
           ООО Юридическое Бюро «АналитикГрупп»<br>
           ИНН 7842456478<br>
@@ -208,95 +208,239 @@ export default {
 </script>
 
 <style scoped>
-/* Добавьте стиль для отображения процесса отправки */
-.sending-message {
-  display: block;
-  color: white;
-  background-color: #3F3F3F;
-  padding: 10px;
-  text-align: center;
-  border-radius: 5px;
-  margin-top: 10px;
+/* =========================
+   FOOTER BASE
+========================= */
+
+footer {
+  --footer-bg: #3F3F3F;
+  --footer-bottom-bg: #363636;
+  --footer-text: #ffffff;
+  --footer-muted: rgba(255, 255, 255, 0.55);
+  --footer-hover: #970E0E;
+  --footer-right-offset: 70px;
+
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--footer-bg);
+  color: var(--footer-text);
 }
 
-.link {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-}
+/* =========================
+   TOP FOOTER LAYOUT
+========================= */
 
 .footer-info {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
+  width: 100%;
+  min-height: 700px;
+  padding: 90px var(--footer-right-offset) 60px;
+  box-sizing: border-box;
+
+  display: grid;
+  grid-template-columns: minmax(420px, 1fr) minmax(560px, 760px);
+  grid-template-areas:
+    "logo nav"
+    "empty callback";
+  column-gap: 80px;
+  row-gap: 42px;
+
+  align-items: start;
+}
+
+.footer-info > img {
+  grid-area: logo;
+  width: clamp(420px, 32vw, 560px);
+  height: auto;
+  margin: 0;
+  justify-self: center;
+}
+
+/* =========================
+   NAVIGATION / SOCIALS / PHONE
+========================= */
+
+.link {
+  grid-area: nav;
+  justify-self: start;
+
+  display: grid;
+  grid-template-columns: max-content max-content max-content;
+  align-items: start;
+  gap: 48px;
 }
 
 .href {
   display: flex;
   flex-direction: column;
-  margin-top: 50px;
-  margin-left: 400px;
+  gap: 20px;
+}
+
+.href a,
+.numbers a {
+  color: var(--footer-text);
+  text-decoration: none;
+  font-weight: 700;
+  line-height: 1.2;
+  transition: color 0.3s;
 }
 
 .href a {
-  margin-top: 10px;
-  margin-right: 80px;
-  color: white;
-  text-decoration: none;
-  transition: color 0.3s;
-  /* анимация при изменении цвета текста */
+  font-size: 22px;
 }
 
-.copyright {
-  text-align: right;
+.numbers {
+  white-space: nowrap;
+}
+
+.numbers a {
+  font-size: 22px;
+}
+
+.href a:hover,
+.numbers a:hover {
+  color: var(--footer-hover);
+}
+
+.icons {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.icons a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icons img {
+  width: 48px;
+  height: 48px;
+  margin: 0;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.icons img:hover {
+  transform: scale(1.15);
+}
+
+/* =========================
+   CALLBACK FORM
+========================= */
+
+.push {
+  grid-area: callback;
+  justify-self: start;
+
+  width: 420px;
+  max-width: 420px;
+
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 10px;
+  align-items: flex-start;
 }
 
-.copyright p {
-  margin: 0;
-}
-
-.company-title {
+.push h2 {
+  margin: 0 0 28px;
+  color: var(--footer-text);
+  font-size: 30px;
+  line-height: 1.25;
   font-weight: 700;
-  color: white !important;
-  margin-bottom: 10px !important;
-  letter-spacing: 0.5px;
 }
 
-.href a:hover {
-  color: #970E0E;
-  /* изменение цвета текста при наведении */
+.push > input {
+  width: 100%;
+  height: 64px;
+  padding: 0 18px;
+  box-sizing: border-box;
+
+  background-color: #ffffff;
+  border: 1px solid #ffffff;
+  border-radius: 10px;
+
+  font-size: 16px;
+  color: #3D210B;
 }
+
+.push > input:focus {
+  outline: none;
+  border-color: #d7d7d7;
+}
+
+.push button {
+  width: 200px;
+  height: 64px;
+  margin-top: 34px;
+
+  cursor: pointer;
+  background-color: transparent;
+  color: var(--footer-text);
+
+  border: 2px solid var(--footer-text);
+  border-radius: 10px;
+
+  font-size: 18px;
+  font-weight: 700;
+  transition: background-color 0.3s, color 0.3s, opacity 0.3s;
+}
+
+.push button:hover {
+  background-color: var(--footer-text);
+  color: var(--footer-bg);
+}
+
+.disabledButton {
+  opacity: 0.6;
+  cursor: not-allowed !important;
+}
+
+/* =========================
+   CONSENT
+========================= */
+
 .footer-consent-label {
+  width: 100%;
+  max-width: 420px;
+  margin-top: 18px;
+
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  margin-top: 14px;
-  max-width: 500px;
+
   text-align: left;
 }
 
 .footer-consent-checkbox {
-  margin-top: 3px;
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  max-width: 16px !important;
+  min-height: 16px !important;
+  max-height: 16px !important;
+
+  margin: 3px 0 0 !important;
+  padding: 0 !important;
+
+  flex: 0 0 16px;
   cursor: pointer;
-  accent-color: #970e0e;
+  accent-color: var(--footer-hover);
 }
 
 .footer-consent-text {
+  flex: 1;
+  min-width: 0;
+
   color: rgba(255, 255, 255, 0.8);
-  font-size: 0.8vw;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.35;
 }
 
 .footer-consent-link {
-  color: white;
+  color: var(--footer-text);
   text-decoration: underline;
+  font-size: inherit;
+  line-height: inherit;
 }
 
 .footer-consent-link:hover {
@@ -304,296 +448,336 @@ export default {
 }
 
 .footer-agreement-error {
+  margin: 10px 0 0;
   color: #ff9a9a;
-  font-size: 0.75vw;
-  margin-top: 10px;
-  margin-bottom: 0;
+  font-size: 12px;
 }
 
-.disabledButton {
-  opacity: 0.6;
-  cursor: not-allowed !important;
-}
-.numbers a {
-  color: white;
-  text-decoration: none;
+.sending-message {
+  display: block;
+  margin-top: 14px;
+  padding: 10px;
+
+  color: var(--footer-text);
+  background-color: var(--footer-bg);
+  border-radius: 5px;
+  text-align: center;
 }
 
-.numbers a:hover {
-  color: #970E0E;
-  /* изменение цвета текста при наведении */
-}
+/* =========================
+   BOTTOM FOOTER
+========================= */
 
-.numbers {
-  margin-top: 50px;
-  margin-left: 80px;
-}
+.politic {
+  padding: 30px var(--footer-right-offset);
+  box-sizing: border-box;
 
-footer {
-  background-color: #3F3F3F;
-}
-
-.icons {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-top: 50px;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 40px;
+
+  background-color: var(--footer-bottom-bg);
 }
 
-.icons img {
-  cursor: pointer;
-  width: 36px;
-  height: 36px;
-  margin-top: 0;
-  margin-right: 0;
-  transition: transform 0.3s;
+.extra-info p {
+  margin: 0;
+  color: var(--footer-muted);
+  font-size: 14px;
+  line-height: 1.45;
 }
 
-.icons img:hover {
-  transform: scale(1.2);
-  /* увеличение масштаба при наведении */
+.copyright {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+
+  text-align: right;
 }
 
-footer img {
-  margin-top: 50px;
-  width: 500px;
-  height: auto;
+.copyright p {
+  margin: 0;
+  color: var(--footer-muted);
+  font-size: 14px;
+  line-height: 1.4;
 }
 
-footer {
-  height: 50%;
-}
+.konf,
+.freepik {
+  display: block;
 
-.politic p {
-  font-size: 1vw;
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.konf {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--footer-muted);
   text-decoration: none;
   text-transform: uppercase;
-  font-size: 1vw;
-  display: block;
+
+  font-size: 14px;
+  line-height: 1.4;
 }
 
 .politic a:hover {
   color: rgb(206, 206, 206);
 }
 
-.politic {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 40px;
-  background-color: #363636;
-  padding: 30px 100px;
-  box-sizing: border-box;
-}
+/* =========================
+   TABLET
+========================= */
 
-
-.freepik {
-  color: rgba(255, 255, 255, 0.5);
-  text-decoration: none;
-  text-transform: uppercase;
-  font-size: 1vw;
-  display: block;
-}
-
-.push {
-  margin-left: 810px;
-  margin-bottom: 50px;
-}
-
-input {
-  background-color: #FFFFFF;
-  border-radius: 10px;
-  height: 50px;
-  border: solid 1px white;
-  width: 300px;
-}
-
-.push button {
-  cursor: pointer;
-  background-color: rgba(255, 255, 255, 0);
-  height: 50px;
-  width: 160px;
-  color: white;
-  margin-top: 20px;
-  border-radius: 10px;
-  border: solid 2px white;
-  margin-left: 10px;
-  transition: background-color 0.3s, color 0.3s;
-  /* анимация при изменении цвета фона и текста */
-}
-
-
-
-.extra-info p {
-  margin: 0;
-}
-
-.push button:hover {
-  background-color: white;
-  /* изменение фона при наведении */
-  color: #3F3F3F;
-  /* изменение цвета текста при наведении */
-}
-
-.push h2 {
-  color: white;
-}
-
-.push input {
-  padding-left: 10px;
-}
-
-
-
-
-.paraweb-logo {
-  margin-top: 5px;
-  width: 10vw;
-}
-
-
-@media (max-width: 858px) {
-  .paraweb-logo {
-    margin: 0;
-  }
-
-
-
-  .paraweb-logo {
-    margin-top: 5px;
-    width: 13vw;
-  }
-
-  .extra-info p {
-    font-size: 2vw;
-  }
-
-  footer img {
-    width: 50%;
-    height: auto;
-    margin-bottom: 40px;
-    margin-top: 30px;
-  }
-
+@media (min-width: 859px) and (max-width: 1480px) {
   .footer-info {
-    flex-direction: column;
-    align-items: center;
+    min-height: auto;
+    padding: 70px var(--footer-right-offset) 50px;
+
+    grid-template-columns: minmax(300px, 1fr) minmax(520px, 620px);
+    column-gap: 50px;
+  }
+
+  .footer-info > img {
+    width: clamp(320px, 35vw, 430px);
   }
 
   .link {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 20px;
+    gap: 34px;
   }
 
-  .href {
-    margin-top: 5px;
-    margin-left: 0;
-  }
-
-  .copyright p {
-    font-size: 2vw;
-  }
-
-  .href a {
-    margin-top: 5px;
-    margin-right: 20px;
-    color: white;
-    text-decoration: none;
-    transition: color 0.3s;
-    font-size: 3vw;
-    /* анимация при изменении цвета текста */
+  .href a,
+  .numbers a {
+    font-size: 18px;
   }
 
   .icons {
-    display: flex;
-    align-items: center;
     gap: 14px;
-    margin-top: 50px;
   }
 
   .icons img {
-    cursor: pointer;
-    height: 36px;
-    width: 36px;
-    margin-right: 0;
-    margin-top: 0;
-    transition: transform 0.3s;
-  }
-
-  .numbers {
-    margin-top: 0;
-    margin-left: 0;
+    width: 38px;
+    height: 38px;
   }
 
   .push {
-    margin-top: 30px;
-    margin-right: 0;
-    margin-left: 0;
+    width: 520px;
+    max-width: 520px;
   }
 
   .push h2 {
-    font-size: 3vw;
+    font-size: 24px;
   }
 
-  input {
-    border-radius: 5px;
-    height: 40px;
-    width: 150px;
-  }
-
-  .politic a {
-    font-size: 2vw;
-  }
-
-
-
-
-
-  .numbers a {
-    font-size: 3vw;
+  .push > input {
+    width: 360px;
+    height: 54px;
   }
 
   .push button {
-    height: 40px;
-    width: 75px;
+    width: 170px;
+    height: 54px;
+    font-size: 16px;
+  }
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 858px) {
+  footer {
+    --footer-right-offset: 18px;
+  }
+
+  .footer-info {
+    min-height: auto;
+    padding: 40px 18px;
+
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "logo"
+      "nav"
+      "callback";
+    row-gap: 34px;
+  }
+
+  .footer-info > img {
+    width: 300px;
+    max-width: 78vw;
+    justify-self: center;
+  }
+
+  .link {
+    width: 100%;
+    justify-self: stretch;
+
+    grid-template-columns: 82px 1fr max-content;
+    gap: 10px;
+
+    align-items: center;
+  }
+
+  .href {
+    gap: 9px;
+  }
+
+  .href a {
+    font-size: 14px;
+    line-height: 1.2;
+  }
+
+  .icons {
+    justify-content: center;
+    gap: 9px;
+  }
+
+  .icons img {
+    width: 32px;
+    height: 32px;
+  }
+
+  .numbers {
+    justify-self: end;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .numbers a {
+    white-space: nowrap;
+    font-size: 12px;
+    line-height: 1;
+  }
+
+  .push {
+    width: 100%;
+    max-width: 340px;
+    justify-self: center;
+    align-items: flex-start;
+  }
+
+  .push h2 {
+    margin-bottom: 14px;
+    font-size: 18px;
+    line-height: 1.25;
+  }
+
+  .push > input {
+    width: 100%;
+    height: 42px;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+
+  .footer-consent-label {
+    width: 100%;
+    max-width: 100%;
+    margin-top: 12px;
+    gap: 8px;
+  }
+
+  .footer-consent-checkbox {
+    margin-top: 2px !important;
+  }
+
+  .footer-consent-text {
+    font-size: 9px;
+    line-height: 1.35;
+  }
+
+  .footer-agreement-error {
     font-size: 10px;
   }
 
-  .politic {
-    padding: 20px;
-    /* отступы */
-    height: auto;
-    /* убираем фиксированную высоту */
+  .push button {
+    width: 120px;
+    height: 42px;
+    margin-top: 18px;
+
+    font-size: 12px;
+    border-radius: 8px;
   }
 
+  .politic {
+    padding: 24px 18px;
 
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
 
- .extra-info p {
-  font-size: 3vw;
-  line-height: 1.4;
-  width: auto;
-  margin: 0;
-  padding: 0;
-}
+  .extra-info p {
+    font-size: 12px;
+    line-height: 1.35;
+  }
 
-  .copyright {}
+  .copyright {
+    align-items: flex-end;
+    text-align: right;
+    gap: 8px;
+  }
 
   .copyright p {
-    font-size: 3vw;
+    font-size: 12px;
   }
 
-  .politic a {
-    display: block;
-    /* каждую ссылку с новой строки */
-    font-size: 2.5vw;
+  .konf,
+  .freepik {
+    font-size: 10px;
+    line-height: 1.35;
+  }
+}
+
+/* =========================
+   SMALL MOBILE
+========================= */
+
+@media (max-width: 430px) {
+  .footer-info {
+    padding: 38px 14px;
+  }
+
+  .footer-info > img {
+    width: 260px;
+  }
+
+  .link {
+    grid-template-columns: 76px 1fr max-content;
+    gap: 7px;
+  }
+
+  .href a {
+    font-size: 13px;
+  }
+
+  .icons {
+    gap: 6px;
+  }
+
+  .icons img {
+    width: 28px;
+    height: 28px;
+  }
+
+  .numbers a {
+    font-size: 11px;
+  }
+
+  .push {
+    max-width: 300px;
+  }
+
+  .push h2 {
+    font-size: 16px;
+  }
+
+  .politic {
+    padding: 22px 14px;
+    gap: 14px;
+  }
+
+  .extra-info p,
+  .copyright p {
+    font-size: 11px;
+  }
+
+  .konf,
+  .freepik {
+    font-size: 9px;
   }
 }
 </style>

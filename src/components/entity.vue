@@ -1,18 +1,35 @@
 <template>
-  <div class="services-section">
-    <div class="services-header">
-      <img class="services-logo" :src="sectionLogo" alt="Services Logo" draggable="false">
-      <h2>{{ sectionTitle }}</h2>
+  <div class="entity-page">
+    <div class="services-section">
+      <div class="services-header">
+        <img class="services-logo" :src="sectionLogo" alt="Services Logo" draggable="false">
+        <h2>{{ sectionTitle }}</h2>
+      </div>
+      <div class="services-grid">
+        <div v-for="(service, index) in services" :key="index" class="service-item">
+          <img draggable="false" :src="service.image" :alt="'Service ' + (index + 1) + ' Logo'" class="service-image">
+          <p>{{ service.name }}</p>
+          <p v-if="showPrice[index]" class="service-price show">{{ service.price }}</p>
+          <p v-else class="service-price">{{ service.price }}</p>
+        </div>
+      </div>
+      <button class="price-button" @click="toggleSize">{{ priceButtonText }}</button>
     </div>
-    <div class="services-grid">
-      <div v-for="(service, index) in services" :key="index" class="service-item">
-        <img draggable="false" :src="service.image" :alt="'Service ' + (index + 1) + ' Logo'" class="service-image">
-        <p>{{ service.name }}</p>
-        <p v-if="showPrice[index]" class="service-price show">{{ service.price }}</p>
-        <p v-else class="service-price">{{ service.price }}</p>
+
+    <div class="real-estate-section">
+      <div class="real-estate-header">
+        <img class="real-estate-logo" :src="sectionLogo" alt="Services Logo" draggable="false">
+        <h2>{{ realEstateTitle }}</h2>
+      </div>
+
+      <div class="real-estate-grid">
+        <div v-for="(service, index) in realEstateServices" :key="index" class="real-estate-item">
+          <p class="real-estate-name">{{ service.name }}</p>
+          <p class="real-estate-description">{{ service.description }}</p>
+          <p class="real-estate-price">{{ service.price }}</p>
+        </div>
       </div>
     </div>
-    <button class="price-button" @click="toggleSize">{{ priceButtonText }}</button>
   </div>
 </template>
 
@@ -30,11 +47,50 @@ export default {
         { image: "src/assets/section_entity/pravo_5.png", name: "Договорное право", price: "договорная цена" },
         { image: "src/assets/section_entity/korp_spor_6.png", name: "Корпоративные споры", price: "от 55000 руб." },
       ],
+      realEstateTitle: "Недвижимость, земля и налоги",
+      realEstateServices: [
+        {
+          name: "Оптимизация имущественных налогов",
+          description: "снижение налоговой нагрузки по объектам недвижимости",
+          price: "договорная цена",
+        },
+        {
+          name: "Снижение кадастровой стоимости",
+          description: "сопровождение процедуры снижения кадастровой стоимости объекта",
+          price: "договорная цена",
+        },
+        {
+          name: "Кадастровые вопросы и экспертизы",
+          description: "консультации с кадастровым инженером и сопровождение землеустроительных экспертиз",
+          price: "договорная цена",
+        },
+        {
+          name: "Градостроительный потенциал участка",
+          description: "анализ возможностей развития и застройки земельного участка, проверка ВРИ, зоны ПЗЗ",
+          price: "договорная цена",
+        },
+        {
+          name: "Оценка перспектив проекта",
+          description: "проверка возможности реализации проекта с учетом ограничений, сроков и затрат",
+          price: "договорная цена",
+        },
+        {
+          name: "Обращения в органы власти",
+          description: "подготовка писем и обращений по вопросам генплана, ПЗЗ, разрешенного использования и параметров строительства",
+          price: "договорная цена",
+        },
+      ],
       priceButtonText: "Прайс",
       isSmall: false,
       showPrice: Array(6).fill(false),
       prevShowPrice: [],
     };
+  },
+  methods: {
+    toggleSize() {
+      this.showPrice = this.showPrice.map((val) => !val);
+      this.prevShowPrice = [...this.showPrice];
+    },
   },
 };
 </script>
@@ -66,12 +122,12 @@ export default {
     content: "";
     position: absolute;
     left: 0;
-    top: -1px; /* Вы можете настроить отступ тени */
+    top: -1px;
     width: 100%;
-    height: 3px; /* Высота тени */
-    background: rgba(0, 0, 0, 0.5); /* Цвет тени */
-    z-index: 1; /* Помещаем тень под содержимым секции */
-    filter: blur(7px); /* Размытие тени */
+    height: 3px;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1;
+    filter: blur(7px);
     
 }
 .services-logo {
@@ -113,7 +169,6 @@ export default {
 }
 
 .service-image {
-
   width: 5vw;
   height: auto;
 }
@@ -142,7 +197,82 @@ export default {
   background-color: #750b0b;
 }
 
+.real-estate-section {
+  min-height: 760px;
+  padding: 45px 40px 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #E4E1DC;
+  box-sizing: border-box;
+}
 
+.real-estate-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 45px;
+}
+
+.real-estate-logo {
+  width: 80px;
+  height: 67px;
+}
+
+.real-estate-header h2 {
+  max-width: 100%;
+  margin: -10px 0 0;
+  color: #3D210B;
+  font-size: 250%;
+  line-height: 1.15;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.real-estate-grid {
+  width: 100%;
+  max-width: 1250px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 45px 120px;
+  color: #3D210B;
+}
+
+.real-estate-item {
+  min-height: 215px;
+  padding: 22px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: 3px solid #3D210B;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.real-estate-name {
+  margin: 0 0 20px;
+  font-size: 1.35vw;
+  line-height: 1.2;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.real-estate-description {
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.25;
+  text-transform: none;
+}
+
+.real-estate-price {
+  margin: auto 0 0;
+  font-size: 1vw;
+  line-height: 1.2;
+  font-weight: 700;
+  text-transform: uppercase;
+}
 
 @media (max-width: 767px) {
   .services-section {
@@ -172,7 +302,6 @@ export default {
 
   .service-price {
     font-size: 12px;
-    /* Устанавливаем меньший размер шрифта для мобильной версии */
   }
 
   .services-header {
@@ -202,6 +331,49 @@ export default {
 
   .services-header {
     margin-bottom: 70px;
+  }
+
+  .real-estate-section {
+    min-height: auto;
+    padding: 35px 22px 45px;
+  }
+
+  .real-estate-logo {
+    width: 30%;
+    height: auto;
+    margin-bottom: 10px;
+  }
+
+  .real-estate-header {
+    margin-bottom: 35px;
+  }
+
+  .real-estate-header h2 {
+    font-size: 6vw;
+  }
+
+  .real-estate-grid {
+    grid-template-columns: repeat(1, 1fr);
+    gap: 18px;
+  }
+
+  .real-estate-item {
+    min-height: 185px;
+    border: 2px solid #3D210B;
+    padding: 20px 15px;
+  }
+
+  .real-estate-name {
+    font-size: 4.2vw;
+  }
+
+  .real-estate-description {
+    min-height: auto;
+    font-size: 3.1vw;
+  }
+
+  .real-estate-price {
+    font-size: 3.2vw;
   }
 }
 @media (min-width: 768px) and (max-width: 1280px) {
@@ -257,6 +429,49 @@ export default {
 
   .services-header {
     margin-bottom: 70px;
+  }
+
+  .real-estate-section {
+    min-height: auto;
+    padding: 45px 35px 60px;
+  }
+
+  .real-estate-logo {
+    width: 30%;
+    height: auto;
+    margin-bottom: 10px;
+  }
+
+  .real-estate-header {
+    margin-bottom: 45px;
+  }
+
+  .real-estate-header h2 {
+    font-size: 4vw;
+  }
+
+  .real-estate-grid {
+    max-width: 760px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+  }
+
+  .real-estate-item {
+    min-height: 225px;
+    border: 2.5px solid #3D210B;
+  }
+
+  .real-estate-name {
+    font-size: 2.5vw;
+  }
+
+  .real-estate-description {
+    min-height: auto;
+    font-size: 1.6vw;
+  }
+
+  .real-estate-price {
+    font-size: 1.8vw;
   }
 }
 </style>

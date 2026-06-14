@@ -122,7 +122,7 @@ const BLOCKED_ROOTS = [
   "президент",
   "войн",
 ];
-
+const MIN_PROBLEM_LENGTH = 50;
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -224,7 +224,13 @@ export default {
         );
         return;
       }
-
+      if (this.problem.trim().length < MIN_PROBLEM_LENGTH) {
+        this.showAlert(
+          `Описание проблемы слишком короткое. Пожалуйста, опишите ситуацию подробнее: минимум ${MIN_PROBLEM_LENGTH} символов.`,
+          "error"
+        );
+        return;
+      }
       if (!validator.isEmail(this.email)) {
         this.showAlert("Введите корректный электронный адрес.", "error");
         return;

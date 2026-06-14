@@ -140,85 +140,120 @@ body {
 }
 
 @media (max-width: 820px) {
-  .content {
-    flex-direction: column;
-    /* Меняем направление flex на вертикальное */
-    align-items: center;
-    /* Центрируем элементы по центру */
-
-  }
-
-  .right-image {
-    display: none;
-    /* Скрываем изображение на экранах до 768px */
-  }
-
   .container {
+    width: 100%;
+    display: block;
     box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
   }
 
   .content {
-    flex: 1;
+    width: 100%;
+    flex: none;
     display: flex;
     flex-direction: column;
+    align-items: center;
+    box-sizing: border-box;
+    padding: 0 20px 30px;
+  }
+
+  .contacts {
+    width: 100%;
     align-items: center;
   }
 
   .contacts h2 {
     font-size: 170%;
-    /* Уменьшаем размер заголовка */
-    margin-bottom: 20px;
     margin-top: 25px;
+    margin-bottom: 20px;
+    text-align: center;
   }
 
   .contact-item {
+    width: 100%;
+    max-width: 340px;
+    min-width: 0;
     display: flex;
     align-items: center;
-    transition: transform 0.3s;
+    justify-content: flex-start;
+    gap: 14px;
+    margin-top: 20px;
+    box-sizing: border-box;
   }
 
   .contact-item:hover {
-    transform: scale3d(1.1, 1.1, 1.1);
-    /* Увеличиваем размер при наведении */
+    transform: none;
   }
 
   .contact-item a {
-    margin-top: 20px;
-    font-size: 14px;
-    /* Уменьшаем размер текста */
+    margin-top: 0;
+    font-size: 15px;
+    line-height: 1.3;
+    text-align: left;
+    word-break: break-word;
   }
 
   .contact-item img {
-    margin-right: 5px;
-    /* Уменьшаем отступ между изображением и текстом */
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    min-height: 34px;
+    margin-right: 0;
+    flex-shrink: 0;
   }
 
-  .map {
+  .img_container,
+  .right-image {
+    display: none;
+  }
+
+.map {
+    width: calc(100vw - 40px);
+    max-width: 500px;
+    height: 300px;
     margin-top: 5px;
-    width: auto;
-    /* Уменьшаем ширину карты */
-    height: auto;
-    /* Автоматический расчет высоты для поддержки соотношения сторон */
+    margin-bottom: 30px;
+    border: 1.5px solid #3D210B;
+    overflow: hidden;
+  }
+
+  .map :deep(iframe) {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .map :deep(ymaps) {
+    max-width: 100% !important;
   }
 }
 
 @media (min-width: 821px) and (max-width: 1480px) {
-  .content {
-    flex-direction: column;
-    /* Меняем направление flex на вертикальное */
-    align-items: center;
+  .container {
+    width: 100%;
+    display: block;
+    box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.3);
+  }
+
+  .img_container {
+    display: none;
   }
 
   .right-image {
     display: none;
   }
 
-  .container {
-    box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.3);
+  .content {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
-  .content {
-    flex: 1;
+  .contacts {
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -228,32 +263,45 @@ body {
     font-size: 300%;
     margin-bottom: 20px;
     margin-top: 40px;
+    text-align: center;
   }
 
   .contact-item {
+    width: 100%;
+    max-width: 420px;
+    min-width: 0;
     display: flex;
     align-items: center;
-    transition: transform 0.3s;
-  }
-
-  .contact-item:hover {
-    transform: scale3d(1.1, 1.1, 1.1);
-    /* Увеличиваем размер при наведении */
+    justify-content: flex-start;
+    gap: 24px;
+    margin-top: 40px;
   }
 
   .contact-item a {
-    margin-top: 10px;
+    margin-top: 0;
     font-size: 1.8vw;
+    line-height: 1.3;
   }
 
   .contact-item img {
-    margin-right: 5px;
-    /* Уменьшаем отступ между изображением и текстом */
+    width: 56px;
+    height: 56px;
+    margin-right: 0;
+    flex-shrink: 0;
+  }
+
+  .maps {
+    width: 100%;
+    display: flex;
+    justify-content: center;
   }
 
   .map {
+    width: 520px;
+    max-width: 90vw;
+    height: 360px;
     margin-top: 0;
+    margin-bottom: 30px;
   }
-
 }
 </style>
