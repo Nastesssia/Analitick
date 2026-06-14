@@ -273,7 +273,13 @@ export default {
   font-weight: 700;
   text-transform: uppercase;
 }
-
+@media (max-width: 858px) {
+  .real-estate-header h2 {
+    font-size: 5vw;
+    line-height: 1.15;
+    margin: -5px 0 0;
+  }
+}
 @media (max-width: 767px) {
   .services-section {
     min-height: 650px;
@@ -314,12 +320,6 @@ export default {
     margin-top: -5px;
   }
 
-  .services-logo {
-    width: 30%;
-    height: auto;
-    margin-bottom: 10px;
-    margin-top: 20px;
-  }
 
   .price-button {
     margin-top: 50px;
@@ -338,11 +338,13 @@ export default {
     padding: 35px 22px 45px;
   }
 
-  .real-estate-logo {
-    width: 30%;
-    height: auto;
-    margin-bottom: 10px;
-  }
+.services-logo,
+.real-estate-logo {
+  width: 70px;
+  height: auto;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
 
   .real-estate-header {
     margin-bottom: 35px;
@@ -472,6 +474,83 @@ export default {
 
   .real-estate-price {
     font-size: 1.8vw;
+  }
+}
+/* ===== FIX ENTITY + REAL ESTATE HEADERS ===== */
+
+.services-header h2,
+.real-estate-header h2 {
+  color: #3D210B;
+  font-size: 250%;
+  line-height: 1.15;
+  margin-top: -10px;
+  text-align: center;
+}
+
+.real-estate-header h2 {
+  text-transform: uppercase;
+}
+
+/* ===== TABLET ===== */
+
+@media (min-width: 768px) and (max-width: 1280px) {
+  .services-header h2,
+  .real-estate-header h2 {
+    font-size: 170%;
+    line-height: 1.15;
+    margin-top: -5px;
+  }
+}
+
+/* ===== MOBILE: 2 COLUMNS ===== */
+
+@media (max-width: 767px) {
+  .services-header h2,
+  .real-estate-header h2 {
+    font-size: 130%;
+    line-height: 1.15;
+    margin-top: -5px;
+  }
+
+  .real-estate-section {
+    padding: 35px 18px 45px;
+  }
+
+  .real-estate-header {
+    margin-bottom: 35px;
+  }
+
+  .real-estate-grid {
+    width: 100%;
+    max-width: 360px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .real-estate-item {
+    min-height: 150px;
+    padding: 12px 8px;
+    border: 2px solid #3D210B;
+  }
+
+  .real-estate-name {
+    margin: 0 0 8px;
+    font-size: clamp(11px, 3vw, 13px);
+    line-height: 1.15;
+  }
+
+  .real-estate-description {
+    min-height: auto;
+    margin: 0 0 8px;
+    font-size: clamp(9px, 2.35vw, 11px);
+    line-height: 1.15;
+    font-weight: 400;
+  }
+
+  .real-estate-price {
+    margin-top: auto;
+    font-size: clamp(10px, 2.6vw, 12px);
+    line-height: 1.15;
   }
 }
 </style>
